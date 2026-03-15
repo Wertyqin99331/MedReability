@@ -1,0 +1,15 @@
+# Build artifacts
+**/bin/
+**/obj/
+
+# User/IDE files
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.DotSettings.user
+
+# Local environment files
+.env
+.env.*
+!.env.example
