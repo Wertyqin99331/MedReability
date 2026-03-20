@@ -39,7 +39,9 @@ public static class TestData
             SharedAdminEmail,
             Clinic1AdminPassword,
             "Alice",
+            "Ivanovna",
             "Admin",
+            "+79000001001",
             UserRole.Admin);
 
         var clinic2Admin = CreateUser(
@@ -48,7 +50,9 @@ public static class TestData
             SharedAdminEmail,
             Clinic2AdminPassword,
             "Bob",
+            "Petrovich",
             "Admin",
+            "+79000001002",
             UserRole.Admin);
 
         var clinic1Patient = CreateUser(
@@ -57,7 +61,9 @@ public static class TestData
             Clinic1PatientEmail,
             Clinic1PatientPassword,
             "Pat",
+            "Sergeevna",
             "One",
+            "+79000001003",
             UserRole.Patient);
 
         var clinic2Patient = CreateUser(
@@ -66,7 +72,9 @@ public static class TestData
             "patient2@tenant.local",
             "PatientClinic2!",
             "Pat",
+            "Alekseevna",
             "Two",
+            "+79000001004",
             UserRole.Patient);
 
         foreach (var user in new[] { clinic1Admin, clinic2Admin, clinic1Patient, clinic2Patient })
@@ -83,7 +91,9 @@ public static class TestData
         string email,
         string rawPassword,
         string firstName,
+        string patronymic,
         string lastName,
+        string phoneNumber,
         UserRole role)
     {
         return new User
@@ -93,7 +103,9 @@ public static class TestData
             Email = email.ToLowerInvariant(),
             PasswordHash = rawPassword,
             FirstName = firstName,
+            Patronymic = patronymic,
             LastName = lastName,
+            PhoneNumber = phoneNumber,
             Role = role,
             IsActive = true
         };

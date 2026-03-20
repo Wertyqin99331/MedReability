@@ -17,6 +17,13 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("OpenCors", policy =>
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 builder.Services.AddProblemDetails();
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -100,6 +107,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStatusCodePages();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+app.UseCors("OpenCors");
 
 app.UseAuthentication();
 app.UseAuthorization();

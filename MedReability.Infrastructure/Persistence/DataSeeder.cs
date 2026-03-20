@@ -44,7 +44,9 @@ public class DataSeeder(AppDbContext dbContext)
                 "admin@clinic.local",
                 "Admin123!",
                 "Clinic",
+                "Ivanovich",
                 "Admin",
+                "+79000000001",
                 UserRole.Admin));
         }
 
@@ -56,7 +58,9 @@ public class DataSeeder(AppDbContext dbContext)
                 "doctor@clinic.local",
                 "Doctor123!",
                 "Default",
+                "Petrovich",
                 "Doctor",
+                "+79000000002",
                 UserRole.Doctor));
         }
 
@@ -68,7 +72,9 @@ public class DataSeeder(AppDbContext dbContext)
                 "patient@clinic.local",
                 "Patient123!",
                 "Default",
+                "Sergeevich",
                 "Patient",
+                "+79000000003",
                 UserRole.Patient));
         }
 
@@ -80,7 +86,9 @@ public class DataSeeder(AppDbContext dbContext)
                 "admin@second-clinic.local",
                 "Admin123!",
                 "Second",
+                "Nikolaevich",
                 "Admin",
+                "+79000000004",
                 UserRole.Admin));
         }
 
@@ -93,7 +101,9 @@ public class DataSeeder(AppDbContext dbContext)
         string email,
         string password,
         string firstName,
+        string patronymic,
         string lastName,
+        string phoneNumber,
         UserRole role)
     {
         var user = new User
@@ -102,7 +112,9 @@ public class DataSeeder(AppDbContext dbContext)
             ClinicId = clinicId,
             Email = email.ToLowerInvariant(),
             FirstName = firstName,
+            Patronymic = patronymic,
             LastName = lastName,
+            PhoneNumber = phoneNumber,
             Role = role,
             IsActive = true
         };

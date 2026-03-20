@@ -29,7 +29,9 @@ public class UserService(AppDbContext dbContext) : IUserService
             ClinicId = clinicId,
             Email = email,
             FirstName = request.FirstName.Trim(),
+            Patronymic = request.Patronymic.Trim(),
             LastName = request.LastName.Trim(),
+            PhoneNumber = request.PhoneNumber.Trim(),
             Role = request.Role,
             IsActive = true
         };
@@ -52,8 +54,25 @@ public class UserService(AppDbContext dbContext) : IUserService
             _ => query.PageSize
         };
 
-        var usersQuery = dbContext.Users
-            .Where(x => x.ClinicId == clinicId)
+        var usersQuery = dbContext.Users.AsQueryable();
+
+        usersQuery = usersQuery.Where(x => x.ClinicId == clinicId);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim().ToLowerInvariant();
+            usersQuery = usersQuery.Where(x =>
+                x.FirstName.ToLower().Contains(search) ||
+                x.LastName.ToLower().Contains(search) ||
+                x.Patronymic.ToLower().Contains(search));
+        }
+
+        if (query.Roles is { Count: > 0 })
+        {
+            usersQuery = usersQuery.Where(x => query.Roles.Contains(x.Role));
+        }
+
+        usersQuery = usersQuery
             .OrderBy(x => x.LastName)
             .ThenBy(x => x.FirstName)
             .ThenBy(x => x.Email);
@@ -69,7 +88,9 @@ public class UserService(AppDbContext dbContext) : IUserService
                 ClinicId = x.ClinicId,
                 Email = x.Email,
                 FirstName = x.FirstName,
+                Patronymic = x.Patronymic,
                 LastName = x.LastName,
+                PhoneNumber = x.PhoneNumber,
                 Role = x.Role,
                 IsActive = x.IsActive
             })
@@ -112,7 +133,9 @@ public class UserService(AppDbContext dbContext) : IUserService
             ClinicId = user.ClinicId,
             Email = user.Email,
             FirstName = user.FirstName,
+            Patronymic = user.Patronymic,
             LastName = user.LastName,
+            PhoneNumber = user.PhoneNumber,
             Role = user.Role,
             IsActive = user.IsActive
         };

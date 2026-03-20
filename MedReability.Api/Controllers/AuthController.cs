@@ -73,7 +73,9 @@ public class AuthController(
             Email = email,
             Role = role,
             FirstName = user.FirstName,
-            LastName = user.LastName
+            Patronymic = user.Patronymic,
+            LastName = user.LastName,
+            PhoneNumber = user.PhoneNumber
         });
     }
 }

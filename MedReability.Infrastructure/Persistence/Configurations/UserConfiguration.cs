@@ -32,9 +32,19 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(x => x.Patronymic)
+            .HasColumnName("patronymic")
+            .HasMaxLength(100)
+            .IsRequired();
+
         builder.Property(x => x.LastName)
             .HasColumnName("last_name")
             .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(x => x.PhoneNumber)
+            .HasColumnName("phone_number")
+            .HasMaxLength(32)
             .IsRequired();
 
         builder.Property(x => x.Role)

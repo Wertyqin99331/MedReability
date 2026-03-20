@@ -3,6 +3,7 @@ using System;
 using MedReability.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MedReability.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260320141955_AddUserPatronymicAndPhone")]
+    partial class AddUserPatronymicAndPhone
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,37 +41,6 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("clinics", (string)null);
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ClinicId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("clinic_id");
-
-                    b.Property<Guid>("DoctorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("doctor_id");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("patient_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DoctorId");
-
-                    b.HasIndex("PatientId");
-
-                    b.HasIndex("ClinicId", "DoctorId", "PatientId")
-                        .IsUnique();
-
-                    b.ToTable("doctor_patient_assignments", (string)null);
                 });
 
             modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
@@ -133,33 +105,6 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("users", (string)null);
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
-                {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
-                        .WithMany()
-                        .HasForeignKey("ClinicId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MedReability.Domain.Entities.User", "Doctor")
-                        .WithMany()
-                        .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
-                        .WithMany()
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Clinic");
-
-                    b.Navigation("Doctor");
-
-                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("MedReability.Domain.Entities.User", b =>

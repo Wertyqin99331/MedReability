@@ -1,14 +1,14 @@
 using MedReability.Api.Common;
+using MedReability.Api.Auth;
 using MedReability.Application.DTOs.Common;
 using MedReability.Application.DTOs.Users;
 using MedReability.Application.Interfaces.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MedReability.Api.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin")]
+[AdminOnly]
 [Route("api/users")]
 public class UsersController(IUserService userService) : ControllerBase
 {

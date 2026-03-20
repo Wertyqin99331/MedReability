@@ -84,7 +84,9 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
             Email = duplicateEmail,
             Password = "Password123!",
             FirstName = "Dupe",
+            Patronymic = "Oneovich",
             LastName = "One",
+            PhoneNumber = "+79000002001",
             Role = MedReability.Domain.Enums.UserRole.Patient
         });
 
@@ -95,7 +97,9 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
             Email = duplicateEmail,
             Password = "Password123!",
             FirstName = "Dupe",
+            Patronymic = "Againovich",
             LastName = "Again",
+            PhoneNumber = "+79000002002",
             Role = MedReability.Domain.Enums.UserRole.Patient
         });
 
@@ -108,7 +112,9 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
             Email = duplicateEmail,
             Password = "Password123!",
             FirstName = "Dupe",
+            Patronymic = "Twovich",
             LastName = "Two",
+            PhoneNumber = "+79000002003",
             Role = MedReability.Domain.Enums.UserRole.Patient
         });
 

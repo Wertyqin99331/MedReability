@@ -17,7 +17,14 @@ public class CreateUserRequestDto
     public string FirstName { get; set; } = string.Empty;
 
     [Required]
+    public string Patronymic { get; set; } = string.Empty;
+
+    [Required]
     public string LastName { get; set; } = string.Empty;
+
+    [Required]
+    [Phone]
+    public string PhoneNumber { get; set; } = string.Empty;
 
     [Required]
     public UserRole Role { get; set; }
