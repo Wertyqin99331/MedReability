@@ -125,6 +125,26 @@ public class UserService(AppDbContext dbContext) : IUserService
         return true;
     }
 
+    public async Task<bool> ActivateUserAsync(Guid clinicId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(x => x.Id == userId && x.ClinicId == clinicId, cancellationToken);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        if (user.IsActive)
+        {
+            return true;
+        }
+
+        user.IsActive = true;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static UserResponseDto Map(User user)
     {
         return new UserResponseDto

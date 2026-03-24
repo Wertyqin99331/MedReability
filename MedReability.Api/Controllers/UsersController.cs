@@ -69,4 +69,29 @@ public class UsersController(IUserService userService) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPatch("{id:guid}/activate")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        if (clinicId is null)
+        {
+            return Forbid();
+        }
+
+        var activated = await userService.ActivateUserAsync(clinicId.Value, id, cancellationToken);
+        if (!activated)
+        {
+            return Problem(
+                title: "User not found",
+                detail: "User was not found in your clinic.",
+                statusCode: StatusCodes.Status404NotFound);
+        }
+
+        return NoContent();
+    }
 }

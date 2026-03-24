@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using MedReability.Api.Common;
 using MedReability.Application.Common;
 using MedReability.Application.DTOs.Auth;
 using MedReability.Application.Interfaces.Services;
@@ -13,6 +14,7 @@ namespace MedReability.Api.Controllers;
 [Route("api/auth")]
 public class AuthController(
     IAuthService authService,
+    IUserProfileService userProfileService,
     AppDbContext dbContext) : ControllerBase
 {
     [AllowAnonymous]
@@ -77,5 +79,35 @@ public class AuthController(
             LastName = user.LastName,
             PhoneNumber = user.PhoneNumber
         });
+    }
+
+    [Authorize]
+    [HttpPatch("me/profile")]
+    [ProducesResponseType(typeof(MeResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateMyProfile(
+        [FromBody] UpdateMyProfileRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        if (clinicId is null || userId is null || string.IsNullOrWhiteSpace(role))
+        {
+            return Forbid();
+        }
+
+        var updatedProfile = await userProfileService.UpdateMyProfileAsync(
+            clinicId.Value,
+            userId.Value,
+            role,
+            request,
+            cancellationToken);
+
+        return Ok(updatedProfile);
     }
 }
