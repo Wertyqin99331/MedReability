@@ -26,3 +26,11 @@ public sealed class PatientOnlyAttribute : AuthorizeAttribute
         Roles = nameof(UserRole.Patient);
     }
 }
+
+public sealed class AdminOrDoctorAttribute : AuthorizeAttribute
+{
+    public AdminOrDoctorAttribute()
+    {
+        Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Doctor)}";
+    }
+}

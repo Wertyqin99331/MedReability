@@ -110,4 +110,32 @@ public class AuthController(
 
         return Ok(updatedProfile);
     }
+
+    [Authorize]
+    [HttpPatch("me/password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangeMyPassword(
+        [FromBody] ChangePasswordRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+
+        if (clinicId is null || userId is null)
+        {
+            return Forbid();
+        }
+
+        await userProfileService.ChangePasswordAsync(
+            clinicId.Value,
+            userId.Value,
+            request,
+            cancellationToken);
+
+        return NoContent();
+    }
 }

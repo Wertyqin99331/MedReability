@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using MedReability.Api.Common;
+using MedReability.Api.Storage;
 using MedReability.Application.Common;
 using MedReability.Infrastructure;
 using MedReability.Infrastructure.Persistence;
@@ -71,6 +72,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<S3StorageOptions>(builder.Configuration.GetSection(S3StorageOptions.SectionName));
+builder.Services.AddScoped<IMediaStorageService, S3MediaStorageService>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);

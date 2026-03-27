@@ -10,4 +10,10 @@ public interface IUserProfileService
         string role,
         UpdateMyProfileRequestDto request,
         CancellationToken cancellationToken = default);
+
+    Task ChangePasswordAsync(
+        Guid clinicId,
+        Guid userId,
+        ChangePasswordRequestDto request,
+        CancellationToken cancellationToken = default);
 }

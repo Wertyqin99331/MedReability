@@ -1,12 +1,16 @@
 using MedReability.Application.DTOs.Auth;
 using MedReability.Application.Interfaces.Services;
+using MedReability.Domain.Entities;
 using MedReability.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedReability.Infrastructure.Services;
 
 public class UserProfileService(AppDbContext dbContext) : IUserProfileService
 {
+    private readonly PasswordHasher<User> _passwordHasher = new();
+
     public async Task<MeResponseDto> UpdateMyProfileAsync(
         Guid clinicId,
         Guid userId,
@@ -54,5 +58,34 @@ public class UserProfileService(AppDbContext dbContext) : IUserProfileService
             LastName = user.LastName,
             PhoneNumber = user.PhoneNumber
         };
+    }
+
+    public async Task ChangePasswordAsync(
+        Guid clinicId,
+        Guid userId,
+        ChangePasswordRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(x => x.Id == userId && x.ClinicId == clinicId && x.IsActive, cancellationToken);
+
+        if (user is null)
+        {
+            throw new KeyNotFoundException("Current user was not found in your clinic.");
+        }
+
+        if (request.CurrentPassword == request.NewPassword)
+        {
+            throw new InvalidOperationException("New password must be different from current password.");
+        }
+
+        var verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword);
+        if (verification == PasswordVerificationResult.Failed)
+        {
+            throw new InvalidOperationException("Current password is invalid.");
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
