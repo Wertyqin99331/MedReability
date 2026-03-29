@@ -1,5 +1,6 @@
 using MedReability.Application.DTOs.Auth;
 using MedReability.Application.Interfaces.Services;
+using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
 using MedReability.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedReability.Infrastructure.Services;
 
-public class UserProfileService(AppDbContext dbContext) : IUserProfileService
+public class UserProfileService(AppDbContext dbContext, IMediaStorageService mediaStorageService) : IUserProfileService
 {
     private readonly PasswordHasher<User> _passwordHasher = new();
 
@@ -45,6 +46,17 @@ public class UserProfileService(AppDbContext dbContext) : IUserProfileService
         user.LastName = request.LastName.Trim();
         user.PhoneNumber = request.PhoneNumber.Trim();
 
+        if (request.Image is not null && request.Image.Length > 0)
+        {
+            var previousImageUrl = user.ImageUrl;
+            user.ImageUrl = await mediaStorageService.UploadAsync("users", request.Image, cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(previousImageUrl))
+            {
+                await mediaStorageService.DeleteFileByUrlAsync(previousImageUrl, cancellationToken);
+            }
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new MeResponseDto
@@ -56,7 +68,8 @@ public class UserProfileService(AppDbContext dbContext) : IUserProfileService
             FirstName = user.FirstName,
             Patronymic = user.Patronymic,
             LastName = user.LastName,
-            PhoneNumber = user.PhoneNumber
+            PhoneNumber = user.PhoneNumber,
+            ImageUrl = user.ImageUrl
         };
     }
 

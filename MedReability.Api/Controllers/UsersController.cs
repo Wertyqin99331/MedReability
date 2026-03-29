@@ -13,11 +13,12 @@ namespace MedReability.Api.Controllers;
 public class UsersController(IUserService userService) : ControllerBase
 {
     [HttpPost]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequestDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateUser([FromForm] CreateUserRequestDto request, CancellationToken cancellationToken)
     {
         var clinicId = User.GetClinicId();
         if (clinicId is null)

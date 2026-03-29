@@ -1,7 +1,6 @@
 using MedReability.Api.Auth;
 using MedReability.Api.Common;
 using MedReability.Api.Models.Exercises;
-using MedReability.Api.Storage;
 using MedReability.Application.DTOs.Common;
 using MedReability.Application.DTOs.Exercises;
 using MedReability.Application.Interfaces.Services;
@@ -13,9 +12,7 @@ namespace MedReability.Api.Controllers;
 [ApiController]
 [AdminOrDoctor]
 [Route("api/exercises")]
-public class ExercisesController(
-    IExerciseService exerciseService,
-    IMediaStorageService mediaStorageService) : ControllerBase
+public class ExercisesController(IExerciseService exerciseService) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<ExerciseResponseDto>), StatusCodes.Status200OK)]
@@ -81,13 +78,11 @@ public class ExercisesController(
             return Forbid();
         }
 
-        var mediaUrl = await mediaStorageService.UploadExerciseMediaAsync(request.Media, cancellationToken);
-
         var createRequest = new CreateExerciseRequestDto
         {
             Name = request.Name,
             Description = request.Description,
-            MediaUrl = mediaUrl,
+            MediaFiles = request.MediaFiles,
             Steps = request.Steps,
             Type = request.Type,
             IsGlobal = request.IsGlobal
@@ -100,6 +95,43 @@ public class ExercisesController(
             cancellationToken);
 
         return CreatedAtAction(nameof(CreateExercise), new { id = exercise.Id }, exercise);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ExerciseResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateExercise(Guid id, [FromForm] UpdateExerciseFormRequest request, CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+
+        if (clinicId is null || userId is null)
+        {
+            return Forbid();
+        }
+
+        var updateRequest = new UpdateExerciseRequestDto
+        {
+            Name = request.Name,
+            Description = request.Description,
+            Steps = request.Steps,
+            Type = request.Type,
+            MediaFiles = request.MediaFiles
+        };
+
+        var exercise = await exerciseService.UpdateExerciseAsync(
+            clinicId.Value,
+            userId.Value,
+            id,
+            User.IsInRole(nameof(UserRole.Admin)),
+            updateRequest,
+            cancellationToken);
+
+        return Ok(exercise);
     }
 
     [HttpDelete("{id:guid}")]

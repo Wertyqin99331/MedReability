@@ -28,10 +28,10 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
             .HasMaxLength(4000)
             .IsRequired();
 
-        builder.Property(x => x.MediaUrl)
-            .HasColumnName("media_url")
-            .HasMaxLength(1000)
-            .IsRequired(false);
+        builder.Property(x => x.MediaUrls)
+            .HasColumnName("media_urls")
+            .HasColumnType("text[]")
+            .IsRequired();
 
         builder.Property(x => x.Steps)
             .HasColumnName("steps")

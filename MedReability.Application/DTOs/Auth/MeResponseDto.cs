@@ -10,4 +10,5 @@ public class MeResponseDto
     public string Patronymic { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
 }

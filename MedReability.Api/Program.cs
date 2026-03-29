@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using MedReability.Api.Common;
 using MedReability.Api.Storage;
 using MedReability.Application.Common;
+using MedReability.Application.Interfaces.Storage;
 using MedReability.Infrastructure;
 using MedReability.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

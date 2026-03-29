@@ -79,7 +79,7 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
 
         await AuthenticateAsync(TestData.Clinic1Id, TestData.SharedAdminEmail, TestData.Clinic1AdminPassword);
 
-        var createInClinic1 = await _client.PostAsJsonAsync("api/users", new CreateUserRequestDto
+        var createInClinic1 = await CreateUserAsFormAsync(new CreateUserRequestDto
         {
             Email = duplicateEmail,
             Password = "Password123!",
@@ -92,7 +92,7 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
 
         Assert.Equal(HttpStatusCode.Created, createInClinic1.StatusCode);
 
-        var duplicateInClinic1 = await _client.PostAsJsonAsync("api/users", new CreateUserRequestDto
+        var duplicateInClinic1 = await CreateUserAsFormAsync(new CreateUserRequestDto
         {
             Email = duplicateEmail,
             Password = "Password123!",
@@ -107,7 +107,7 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
 
         await AuthenticateAsync(TestData.Clinic2Id, TestData.SharedAdminEmail, TestData.Clinic2AdminPassword);
 
-        var createInClinic2 = await _client.PostAsJsonAsync("api/users", new CreateUserRequestDto
+        var createInClinic2 = await CreateUserAsFormAsync(new CreateUserRequestDto
         {
             Email = duplicateEmail,
             Password = "Password123!",
@@ -155,5 +155,21 @@ public class TenancyIntegrationTests : IClassFixture<TestWebApplicationFactory>
         Assert.False(string.IsNullOrWhiteSpace(body.AccessToken));
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body.AccessToken);
+    }
+
+    private async Task<HttpResponseMessage> CreateUserAsFormAsync(CreateUserRequestDto request)
+    {
+        using var form = new MultipartFormDataContent
+        {
+            { new StringContent(request.Email), nameof(CreateUserRequestDto.Email) },
+            { new StringContent(request.Password), nameof(CreateUserRequestDto.Password) },
+            { new StringContent(request.FirstName), nameof(CreateUserRequestDto.FirstName) },
+            { new StringContent(request.Patronymic), nameof(CreateUserRequestDto.Patronymic) },
+            { new StringContent(request.LastName), nameof(CreateUserRequestDto.LastName) },
+            { new StringContent(request.PhoneNumber), nameof(CreateUserRequestDto.PhoneNumber) },
+            { new StringContent(request.Role.ToString()), nameof(CreateUserRequestDto.Role) }
+        };
+
+        return await _client.PostAsync("api/users", form);
     }
 }

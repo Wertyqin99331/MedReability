@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace MedReability.Application.DTOs.Auth;
 
@@ -20,4 +21,6 @@ public class UpdateMyProfileRequestDto
     [Required]
     [Phone]
     public string PhoneNumber { get; set; } = string.Empty;
+
+    public IFormFile? Image { get; set; }
 }

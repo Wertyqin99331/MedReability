@@ -1,6 +1,7 @@
 using MedReability.Application.DTOs.Common;
 using MedReability.Application.DTOs.Users;
 using MedReability.Application.Interfaces.Services;
+using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
 using MedReability.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedReability.Infrastructure.Services;
 
-public class UserService(AppDbContext dbContext) : IUserService
+public class UserService(AppDbContext dbContext, IMediaStorageService mediaStorageService) : IUserService
 {
     private readonly PasswordHasher<User> _passwordHasher = new();
 
@@ -32,6 +33,7 @@ public class UserService(AppDbContext dbContext) : IUserService
             Patronymic = request.Patronymic.Trim(),
             LastName = request.LastName.Trim(),
             PhoneNumber = request.PhoneNumber.Trim(),
+            ImageUrl = await mediaStorageService.UploadAsync("users", request.Image, cancellationToken),
             Role = request.Role,
             IsActive = true
         };
@@ -91,6 +93,7 @@ public class UserService(AppDbContext dbContext) : IUserService
                 Patronymic = x.Patronymic,
                 LastName = x.LastName,
                 PhoneNumber = x.PhoneNumber,
+                ImageUrl = x.ImageUrl,
                 Role = x.Role,
                 IsActive = x.IsActive
             })
@@ -156,6 +159,7 @@ public class UserService(AppDbContext dbContext) : IUserService
             Patronymic = user.Patronymic,
             LastName = user.LastName,
             PhoneNumber = user.PhoneNumber,
+            ImageUrl = user.ImageUrl,
             Role = user.Role,
             IsActive = user.IsActive
         };

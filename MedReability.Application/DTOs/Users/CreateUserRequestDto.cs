@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MedReability.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace MedReability.Application.DTOs.Users;
 
@@ -25,6 +26,8 @@ public class CreateUserRequestDto
     [Required]
     [Phone]
     public string PhoneNumber { get; set; } = string.Empty;
+
+    public IFormFile? Image { get; set; }
 
     [Required]
     public UserRole Role { get; set; }

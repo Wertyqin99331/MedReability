@@ -9,7 +9,7 @@ public class Exercise
     public Clinic Clinic { get; set; } = null!;
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string? MediaUrl { get; set; }
+    public string[] MediaUrls { get; set; } = [];
     public Guid? UserId { get; set; }
     public User? User { get; set; }
     public bool IsDeleted { get; set; }

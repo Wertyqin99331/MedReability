@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MedReability.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace MedReability.Application.DTOs.Exercises;
 
@@ -11,7 +12,7 @@ public class CreateExerciseRequestDto
     [Required]
     public string Description { get; set; } = string.Empty;
 
-    public string? MediaUrl { get; set; }
+    public List<IFormFile>? MediaFiles { get; set; }
 
     [Required]
     public List<string> Steps { get; set; } = [];

@@ -77,19 +77,21 @@ public class AuthController(
             FirstName = user.FirstName,
             Patronymic = user.Patronymic,
             LastName = user.LastName,
-            PhoneNumber = user.PhoneNumber
+            PhoneNumber = user.PhoneNumber,
+            ImageUrl = user.ImageUrl
         });
     }
 
     [Authorize]
     [HttpPatch("me/profile")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(MeResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateMyProfile(
-        [FromBody] UpdateMyProfileRequestDto request,
+        [FromForm] UpdateMyProfileRequestDto request,
         CancellationToken cancellationToken)
     {
         var clinicId = User.GetClinicId();

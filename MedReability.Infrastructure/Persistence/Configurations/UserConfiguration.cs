@@ -47,6 +47,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(32)
             .IsRequired();
 
+        builder.Property(x => x.ImageUrl)
+            .HasColumnName("image_url")
+            .HasMaxLength(1000)
+            .IsRequired(false);
+
         builder.Property(x => x.Role)
             .HasColumnName("role")
             .HasConversion<string>()

@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using MedReability.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
-namespace MedReability.Api.Models.Exercises;
+namespace MedReability.Application.DTOs.Exercises;
 
-public class CreateExerciseFormRequest
+public class UpdateExerciseRequestDto
 {
     [Required]
     public string Name { get; set; } = string.Empty;
@@ -11,13 +12,11 @@ public class CreateExerciseFormRequest
     [Required]
     public string Description { get; set; } = string.Empty;
 
-    public List<IFormFile>? MediaFiles { get; set; }
-
     [Required]
     public List<string> Steps { get; set; } = [];
 
     [Required]
     public ExerciseType Type { get; set; }
 
-    public bool IsGlobal { get; set; }
+    public List<IFormFile>? MediaFiles { get; set; }
 }

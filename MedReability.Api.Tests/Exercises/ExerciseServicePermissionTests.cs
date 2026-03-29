@@ -1,9 +1,11 @@
 using MedReability.Application.DTOs.Exercises;
+using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
 using MedReability.Domain.Enums;
 using MedReability.Infrastructure.Persistence;
 using MedReability.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace MedReability.Api.Tests.Exercises;
 
@@ -14,7 +16,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
 
         var result = await service.GetExercisesAsync(
             data.ClinicAId,
@@ -33,7 +35,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
 
         var result = await service.GetExercisesAsync(
             data.ClinicAId,
@@ -52,7 +54,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
 
         var own = await service.GetExerciseByIdAsync(data.ClinicAId, data.DoctorAId, data.OwnExerciseId, isAdmin: false);
         Assert.Equal(data.OwnExerciseId, own.Id);
@@ -69,7 +71,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
 
         var result = await service.GetExerciseByIdAsync(data.ClinicAId, data.AdminAId, data.OtherDoctorExerciseId, isAdmin: true);
 
@@ -81,7 +83,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
 
         await service.SoftDeleteExerciseAsync(data.ClinicAId, data.DoctorAId, data.OwnExerciseId, isAdmin: false);
         await service.SoftDeleteExerciseAsync(data.ClinicAId, data.DoctorAId, data.GlobalExerciseId, isAdmin: false);
@@ -103,7 +105,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
 
         await service.SoftDeleteExerciseAsync(data.ClinicAId, data.AdminAId, data.OtherDoctorExerciseId, isAdmin: true);
 
@@ -115,6 +117,81 @@ public class ExerciseServicePermissionTests
 
         Assert.True(deleted.IsDeleted);
         Assert.False(otherClinic.IsDeleted);
+    }
+
+    [Fact]
+    public async Task Update_Doctor_Can_Update_Own_And_Global_But_Not_Other_Doctor()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
+
+        var updatedOwn = await service.UpdateExerciseAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            data.OwnExerciseId,
+            isAdmin: false,
+            new UpdateExerciseRequestDto
+            {
+                Name = "Own Updated",
+                Description = "Own Updated Description",
+                Steps = ["Step A"],
+                Type = ExerciseType.Time
+            });
+
+        var updatedGlobal = await service.UpdateExerciseAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            data.GlobalExerciseId,
+            isAdmin: false,
+            new UpdateExerciseRequestDto
+            {
+                Name = "Global Updated",
+                Description = "Global Updated Description",
+                Steps = ["Step B"],
+                Type = ExerciseType.Repetition
+            });
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.UpdateExerciseAsync(
+                data.ClinicAId,
+                data.DoctorAId,
+                data.OtherDoctorExerciseId,
+                isAdmin: false,
+                new UpdateExerciseRequestDto
+                {
+                    Name = "Forbidden",
+                    Description = "Forbidden",
+                    Steps = ["Step C"],
+                    Type = ExerciseType.Repetition
+                }));
+
+        Assert.Equal("Own Updated", updatedOwn.Name);
+        Assert.Equal("Global Updated", updatedGlobal.Name);
+    }
+
+    [Fact]
+    public async Task Update_Admin_Can_Update_Any_In_Clinic()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = new ExerciseService(db, new TestMediaStorageService());
+
+        var updated = await service.UpdateExerciseAsync(
+            data.ClinicAId,
+            data.AdminAId,
+            data.OtherDoctorExerciseId,
+            isAdmin: true,
+            new UpdateExerciseRequestDto
+            {
+                Name = "Admin Updated",
+                Description = "Admin Updated Description",
+                Steps = ["Step Z"],
+                Type = ExerciseType.Time
+            });
+
+        Assert.Equal("Admin Updated", updated.Name);
+        Assert.Equal(ExerciseType.Time, updated.Type);
     }
 
     private static AppDbContext CreateDbContext()
@@ -183,7 +260,7 @@ public class ExerciseServicePermissionTests
             UserId = userId,
             Name = name,
             Description = "Description",
-            MediaUrl = null,
+            MediaUrls = [],
             IsDeleted = false,
             Type = ExerciseType.Repetition,
             Steps = ["Step 1"]
@@ -198,4 +275,17 @@ public class ExerciseServicePermissionTests
         Guid GlobalExerciseId,
         Guid OtherDoctorExerciseId,
         Guid ClinicBExerciseId);
+
+    private sealed class TestMediaStorageService : IMediaStorageService
+    {
+        public Task<string?> UploadAsync(string prefix, IFormFile? file, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        public Task DeleteFileByUrlAsync(string? fileUrl, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
 }
