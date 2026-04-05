@@ -1,5 +1,6 @@
 using MedReability.Application.DTOs.Common;
 using MedReability.Application.DTOs.Users;
+using MedReability.Application.Interfaces.Security;
 using MedReability.Application.Interfaces.Services;
 using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
@@ -9,7 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedReability.Infrastructure.Services;
 
-public class UserService(AppDbContext dbContext, IMediaStorageService mediaStorageService) : IUserService
+public class UserService(
+    AppDbContext dbContext,
+    IMediaStorageService mediaStorageService,
+    IAccessPolicyService accessPolicyService) : IUserService
 {
     private readonly PasswordHasher<User> _passwordHasher = new();
 
@@ -111,9 +115,9 @@ public class UserService(AppDbContext dbContext, IMediaStorageService mediaStora
     public async Task<bool> DeactivateUserAsync(Guid clinicId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(x => x.Id == userId && x.ClinicId == clinicId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
-        if (user is null)
+        if (user is null || !accessPolicyService.IsSameClinic(clinicId, user.ClinicId))
         {
             return false;
         }
@@ -131,9 +135,9 @@ public class UserService(AppDbContext dbContext, IMediaStorageService mediaStora
     public async Task<bool> ActivateUserAsync(Guid clinicId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(x => x.Id == userId && x.ClinicId == clinicId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
-        if (user is null)
+        if (user is null || !accessPolicyService.IsSameClinic(clinicId, user.ClinicId))
         {
             return false;
         }

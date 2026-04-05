@@ -34,7 +34,9 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
         services.AddScoped<IDoctorPatientAssignmentService, DoctorPatientAssignmentService>();
+        services.AddScoped<IAccessPolicyService, AccessPolicyService>();
         services.AddScoped<IExerciseService, ExerciseService>();
+        services.AddScoped<IPatientTrainingPlanService, PatientTrainingPlanService>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<DataSeeder>();
 

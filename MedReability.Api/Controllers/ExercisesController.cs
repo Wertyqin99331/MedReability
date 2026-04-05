@@ -31,6 +31,7 @@ public class ExercisesController(IExerciseService exerciseService) : ControllerB
         var exercises = await exerciseService.GetExercisesAsync(
             clinicId.Value,
             userId.Value,
+            User.IsInRole(nameof(UserRole.Admin)),
             query,
             cancellationToken);
 

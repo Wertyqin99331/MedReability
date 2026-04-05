@@ -16,6 +16,13 @@ public interface IDoctorPatientAssignmentService
         Guid doctorId,
         CancellationToken cancellationToken = default);
 
+    Task<DoctorPatientOverviewResponseDto> GetPatientOverviewAsync(
+        Guid clinicId,
+        Guid doctorId,
+        Guid patientId,
+        DateOnly? startDate,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResultDto<DoctorPatientAssignmentListItemDto>> GetAssignmentsAsync(
         Guid clinicId,
         DoctorPatientAssignmentsQueryDto query,

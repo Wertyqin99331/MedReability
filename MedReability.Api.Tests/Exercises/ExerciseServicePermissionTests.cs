@@ -1,4 +1,5 @@
 using MedReability.Application.DTOs.Exercises;
+using MedReability.Application.Interfaces.Security;
 using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
 using MedReability.Domain.Enums;
@@ -16,11 +17,12 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         var result = await service.GetExercisesAsync(
             data.ClinicAId,
             data.DoctorAId,
+            isAdmin: false,
             new ListExercisesQueryDto { PageNumber = 1, PageSize = 50, All = false });
 
         var ids = result.Items.Select(x => x.Id).ToHashSet();
@@ -35,11 +37,12 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         var result = await service.GetExercisesAsync(
             data.ClinicAId,
             data.DoctorAId,
+            isAdmin: false,
             new ListExercisesQueryDto { PageNumber = 1, PageSize = 50, All = true });
 
         var ids = result.Items.Select(x => x.Id).ToHashSet();
@@ -54,7 +57,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         var own = await service.GetExerciseByIdAsync(data.ClinicAId, data.DoctorAId, data.OwnExerciseId, isAdmin: false);
         Assert.Equal(data.OwnExerciseId, own.Id);
@@ -71,7 +74,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         var result = await service.GetExerciseByIdAsync(data.ClinicAId, data.AdminAId, data.OtherDoctorExerciseId, isAdmin: true);
 
@@ -79,11 +82,32 @@ public class ExerciseServicePermissionTests
     }
 
     [Fact]
+    public async Task GetExercises_Admin_Returns_All_In_Clinic()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        var result = await service.GetExercisesAsync(
+            data.ClinicAId,
+            data.AdminAId,
+            isAdmin: true,
+            new ListExercisesQueryDto { PageNumber = 1, PageSize = 50, All = false });
+
+        var ids = result.Items.Select(x => x.Id).ToHashSet();
+        Assert.Equal(3, ids.Count);
+        Assert.Contains(data.OwnExerciseId, ids);
+        Assert.Contains(data.GlobalExerciseId, ids);
+        Assert.Contains(data.OtherDoctorExerciseId, ids);
+        Assert.DoesNotContain(data.ClinicBExerciseId, ids);
+    }
+
+    [Fact]
     public async Task Delete_Doctor_Can_Delete_Own_And_Global_But_Not_Other_Doctor()
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         await service.SoftDeleteExerciseAsync(data.ClinicAId, data.DoctorAId, data.OwnExerciseId, isAdmin: false);
         await service.SoftDeleteExerciseAsync(data.ClinicAId, data.DoctorAId, data.GlobalExerciseId, isAdmin: false);
@@ -105,7 +129,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         await service.SoftDeleteExerciseAsync(data.ClinicAId, data.AdminAId, data.OtherDoctorExerciseId, isAdmin: true);
 
@@ -124,7 +148,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         var updatedOwn = await service.UpdateExerciseAsync(
             data.ClinicAId,
@@ -175,7 +199,7 @@ public class ExerciseServicePermissionTests
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
-        var service = new ExerciseService(db, new TestMediaStorageService());
+        var service = CreateService(db);
 
         var updated = await service.UpdateExerciseAsync(
             data.ClinicAId,
@@ -201,6 +225,12 @@ public class ExerciseServicePermissionTests
             .Options;
 
         return new AppDbContext(options);
+    }
+
+    private static ExerciseService CreateService(AppDbContext dbContext)
+    {
+        IAccessPolicyService accessPolicyService = new AccessPolicyService();
+        return new ExerciseService(dbContext, new TestMediaStorageService(), accessPolicyService);
     }
 
     private static async Task<SeedData> SeedAsync(AppDbContext db)

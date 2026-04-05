@@ -14,6 +14,7 @@ public interface IExerciseService
     Task<PagedResultDto<ExerciseResponseDto>> GetExercisesAsync(
         Guid clinicId,
         Guid userId,
+        bool isAdmin,
         ListExercisesQueryDto query,
         CancellationToken cancellationToken = default);
 

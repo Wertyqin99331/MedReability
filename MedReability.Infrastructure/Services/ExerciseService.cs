@@ -1,5 +1,6 @@
 using MedReability.Application.DTOs.Common;
 using MedReability.Application.DTOs.Exercises;
+using MedReability.Application.Interfaces.Security;
 using MedReability.Application.Interfaces.Services;
 using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
@@ -10,7 +11,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedReability.Infrastructure.Services;
 
-public class ExerciseService(AppDbContext dbContext, IMediaStorageService mediaStorageService) : IExerciseService
+public class ExerciseService(
+    AppDbContext dbContext,
+    IMediaStorageService mediaStorageService,
+    IAccessPolicyService accessPolicyService) : IExerciseService
 {
     public async Task<ExerciseResponseDto> CreateExerciseAsync(
         Guid clinicId,
@@ -68,6 +72,7 @@ public class ExerciseService(AppDbContext dbContext, IMediaStorageService mediaS
     public async Task<PagedResultDto<ExerciseResponseDto>> GetExercisesAsync(
         Guid clinicId,
         Guid userId,
+        bool isAdmin,
         ListExercisesQueryDto query,
         CancellationToken cancellationToken = default)
     {
@@ -83,9 +88,12 @@ public class ExerciseService(AppDbContext dbContext, IMediaStorageService mediaS
             .AsNoTracking()
             .Where(x => x.ClinicId == clinicId && !x.IsDeleted);
 
-        exercisesQuery = query.All
-            ? exercisesQuery.Where(x => x.UserId == userId || x.UserId == null)
-            : exercisesQuery.Where(x => x.UserId == userId);
+        if (!isAdmin)
+        {
+            exercisesQuery = query.All
+                ? exercisesQuery.Where(x => x.UserId == userId || x.UserId == null)
+                : exercisesQuery.Where(x => x.UserId == userId);
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -138,36 +146,21 @@ public class ExerciseService(AppDbContext dbContext, IMediaStorageService mediaS
     {
         var exerciseQuery = dbContext.Exercises
             .AsNoTracking()
-            .Where(x => x.Id == exerciseId
-                        && x.ClinicId == clinicId
-                        && !x.IsDeleted);
+            .Where(x => x.Id == exerciseId && x.ClinicId == clinicId && !x.IsDeleted);
 
         if (!isAdmin)
         {
             exerciseQuery = exerciseQuery.Where(x => x.UserId == userId || x.UserId == null);
         }
 
-        var exercise = await exerciseQuery
-            .Select(x => new ExerciseResponseDto
-            {
-                Id = x.Id,
-                ClinicId = x.ClinicId,
-                UserId = x.UserId,
-                Name = x.Name,
-                Description = x.Description,
-                MediaUrls = x.MediaUrls.ToList(),
-                IsDeleted = x.IsDeleted,
-                Type = x.Type,
-                Steps = x.Steps.ToList()
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+        var exercise = await exerciseQuery.FirstOrDefaultAsync(cancellationToken);
 
         if (exercise is null)
         {
             throw new KeyNotFoundException("Exercise was not found.");
         }
 
-        return exercise;
+        return MapToDto(exercise);
     }
 
     public async Task<ExerciseResponseDto> UpdateExerciseAsync(
@@ -186,7 +179,7 @@ public class ExerciseService(AppDbContext dbContext, IMediaStorageService mediaS
             throw new KeyNotFoundException("Exercise was not found.");
         }
 
-        if (!isAdmin && exercise.UserId is not null && exercise.UserId != userId)
+        if (!accessPolicyService.IsAdminOrOwnerOrGlobal(isAdmin, userId, exercise.UserId))
         {
             throw new UnauthorizedAccessException("You are not allowed to edit this exercise.");
         }
@@ -261,7 +254,7 @@ public class ExerciseService(AppDbContext dbContext, IMediaStorageService mediaS
             throw new KeyNotFoundException("Exercise was not found.");
         }
 
-        if (exercise.UserId is not null && exercise.UserId != userId && !isAdmin)
+        if (!accessPolicyService.IsAdminOrOwnerOrGlobal(isAdmin, userId, exercise.UserId))
         {
             throw new UnauthorizedAccessException("You are not allowed to delete this exercise.");
         }

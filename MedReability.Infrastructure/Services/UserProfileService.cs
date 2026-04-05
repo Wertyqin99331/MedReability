@@ -1,4 +1,5 @@
 using MedReability.Application.DTOs.Auth;
+using MedReability.Application.Interfaces.Security;
 using MedReability.Application.Interfaces.Services;
 using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
@@ -8,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedReability.Infrastructure.Services;
 
-public class UserProfileService(AppDbContext dbContext, IMediaStorageService mediaStorageService) : IUserProfileService
+public class UserProfileService(
+    AppDbContext dbContext,
+    IMediaStorageService mediaStorageService,
+    IAccessPolicyService accessPolicyService) : IUserProfileService
 {
     private readonly PasswordHasher<User> _passwordHasher = new();
 
@@ -20,9 +24,9 @@ public class UserProfileService(AppDbContext dbContext, IMediaStorageService med
         CancellationToken cancellationToken = default)
     {
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(x => x.Id == userId && x.ClinicId == clinicId && x.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == userId && x.IsActive, cancellationToken);
 
-        if (user is null)
+        if (user is null || !accessPolicyService.IsSameClinic(clinicId, user.ClinicId))
         {
             throw new KeyNotFoundException("Current user was not found in your clinic.");
         }
@@ -80,9 +84,9 @@ public class UserProfileService(AppDbContext dbContext, IMediaStorageService med
         CancellationToken cancellationToken = default)
     {
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(x => x.Id == userId && x.ClinicId == clinicId && x.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == userId && x.IsActive, cancellationToken);
 
-        if (user is null)
+        if (user is null || !accessPolicyService.IsSameClinic(clinicId, user.ClinicId))
         {
             throw new KeyNotFoundException("Current user was not found in your clinic.");
         }

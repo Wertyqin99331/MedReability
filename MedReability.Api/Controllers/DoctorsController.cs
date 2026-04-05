@@ -33,4 +33,32 @@ public class DoctorsController(
 
         return Ok(patients);
     }
+
+    [HttpGet("me/patient-overview/{patientId:guid}")]
+    [ProducesResponseType(typeof(DoctorPatientOverviewResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPatientOverview(
+        Guid patientId,
+        [FromQuery] DateOnly? startDate,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var doctorId = User.GetUserId();
+
+        if (clinicId is null || doctorId is null)
+        {
+            return Forbid();
+        }
+
+        var overview = await assignmentService.GetPatientOverviewAsync(
+            clinicId.Value,
+            doctorId.Value,
+            patientId,
+            startDate,
+            cancellationToken);
+
+        return Ok(overview);
+    }
 }
