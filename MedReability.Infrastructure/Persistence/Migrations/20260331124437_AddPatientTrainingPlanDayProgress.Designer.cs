@@ -25,7 +25,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,7 +43,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("clinics", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignmentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -74,7 +74,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("doctor_patient_assignments", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Exercise", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ExerciseEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -130,7 +130,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("exercises", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlan", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -187,7 +187,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("patient_training_plans", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDay", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -219,7 +219,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("patient_training_plan_days", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExercise", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExerciseEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -264,7 +264,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgress", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgressEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -309,7 +309,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -378,117 +378,117 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignmentEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany()
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Doctor")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Doctor")
                         .WithMany()
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
 
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Exercise", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ExerciseEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany()
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "User")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "UserEntity")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
 
-                    b.Navigation("User");
+                    b.Navigation("UserEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlan", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany()
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "CreatedByUser")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
 
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDay", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlan", "PatientTrainingPlan")
+                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanEntity", "PatientTrainingPlanEntity")
                         .WithMany("Days")
                         .HasForeignKey("PatientTrainingPlanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("PatientTrainingPlan");
+                    b.Navigation("PatientTrainingPlanEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExercise", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExerciseEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Exercise", "Exercise")
+                    b.HasOne("MedReability.Domain.Entities.ExerciseEntity", "ExerciseEntity")
                         .WithMany()
                         .HasForeignKey("ExerciseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanDay", "PatientTrainingPlanDay")
+                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", "PatientTrainingPlanDayEntity")
                         .WithMany("Exercises")
                         .HasForeignKey("PatientTrainingPlanDayId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Exercise");
+                    b.Navigation("ExerciseEntity");
 
-                    b.Navigation("PatientTrainingPlanDay");
+                    b.Navigation("PatientTrainingPlanDayEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgress", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgressEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlan", "PatientTrainingPlan")
+                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanEntity", "PatientTrainingPlanEntity")
                         .WithMany()
                         .HasForeignKey("PatientTrainingPlanId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -496,31 +496,31 @@ namespace MedReability.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Patient");
 
-                    b.Navigation("PatientTrainingPlan");
+                    b.Navigation("PatientTrainingPlanEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany("Users")
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlan", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanEntity", b =>
                 {
                     b.Navigation("Days");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDay", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", b =>
                 {
                     b.Navigation("Exercises");
                 });

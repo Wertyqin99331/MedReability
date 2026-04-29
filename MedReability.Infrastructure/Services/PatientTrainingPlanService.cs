@@ -24,7 +24,7 @@ public class PatientTrainingPlanService(
         await ValidateDoctorAssignmentIfRequiredAsync(clinicId, currentUserId, request.PatientId, isAdmin, cancellationToken);
         await ValidateDaysAsync(clinicId, currentUserId, isAdmin, request.Days, cancellationToken);
 
-        var plan = new PatientTrainingPlan
+        var plan = new PatientTrainingPlanEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -39,7 +39,7 @@ public class PatientTrainingPlanService(
 
         plan.Days = request.Days
             .OrderBy(x => x.DayNumber)
-            .Select(day => new PatientTrainingPlanDay
+            .Select(day => new PatientTrainingPlanDayEntity
             {
                 Id = Guid.NewGuid(),
                 PatientTrainingPlanId = plan.Id,
@@ -48,11 +48,13 @@ public class PatientTrainingPlanService(
                 Notes = string.IsNullOrWhiteSpace(day.Notes) ? null : day.Notes.Trim(),
                 Exercises = day.Exercises
                     .OrderBy(x => x.Order)
-                    .Select(ex => new PatientTrainingPlanDayExercise
+                    .Select(ex => new PatientTrainingPlanDayExerciseEntity
                     {
                         Id = Guid.NewGuid(),
                         Order = ex.Order,
                         ExerciseId = ex.ExerciseId,
+                        Sets = ex.Sets,
+                        RestBetweenSets = ex.RestBetweenSets,
                         Repetitions = ex.Repetitions,
                         DurationSeconds = ex.DurationSeconds,
                         Comment = string.IsNullOrWhiteSpace(ex.Comment) ? null : ex.Comment.Trim()
@@ -113,7 +115,7 @@ public class PatientTrainingPlanService(
 
         var newDays = request.Days
             .OrderBy(x => x.DayNumber)
-            .Select(day => new PatientTrainingPlanDay
+            .Select(day => new PatientTrainingPlanDayEntity
             {
                 Id = Guid.NewGuid(),
                 PatientTrainingPlanId = plan.Id,
@@ -122,11 +124,13 @@ public class PatientTrainingPlanService(
                 Notes = string.IsNullOrWhiteSpace(day.Notes) ? null : day.Notes.Trim(),
                 Exercises = day.Exercises
                     .OrderBy(x => x.Order)
-                    .Select(ex => new PatientTrainingPlanDayExercise
+                    .Select(ex => new PatientTrainingPlanDayExerciseEntity
                     {
                         Id = Guid.NewGuid(),
                         Order = ex.Order,
                         ExerciseId = ex.ExerciseId,
+                        Sets = ex.Sets,
+                        RestBetweenSets = ex.RestBetweenSets,
                         Repetitions = ex.Repetitions,
                         DurationSeconds = ex.DurationSeconds,
                         Comment = string.IsNullOrWhiteSpace(ex.Comment) ? null : ex.Comment.Trim()
@@ -179,7 +183,7 @@ public class PatientTrainingPlanService(
             return MapDayProgress(existingProgress);
         }
 
-        var progress = new PatientTrainingPlanDayProgress
+        var progress = new PatientTrainingPlanDayProgressEntity
         {
             Id = Guid.NewGuid(),
             PatientId = patientId,
@@ -246,7 +250,7 @@ public class PatientTrainingPlanService(
     }
 
     private async Task UpdatePlanStatusByCompletedDayAsync(
-        PatientTrainingPlan plan,
+        PatientTrainingPlanEntity plan,
         int completedDayNumber,
         CancellationToken cancellationToken)
     {
@@ -379,7 +383,7 @@ public class PatientTrainingPlanService(
 
             if (day.Exercises.Any(x => x.Order <= 0))
             {
-                throw new InvalidOperationException("Exercise order must be greater than 0.");
+                throw new InvalidOperationException("ExerciseEntity order must be greater than 0.");
             }
 
             var duplicatedOrder = day.Exercises
@@ -387,7 +391,7 @@ public class PatientTrainingPlanService(
                 .Any(g => g.Count() > 1);
             if (duplicatedOrder)
             {
-                throw new InvalidOperationException("Exercise order must be unique inside a day.");
+                throw new InvalidOperationException("ExerciseEntity order must be unique inside a day.");
             }
 
             foreach (var ex in day.Exercises)
@@ -403,6 +407,21 @@ public class PatientTrainingPlanService(
                 if (ex.Repetitions is <= 0 || ex.DurationSeconds is <= 0)
                 {
                     throw new InvalidOperationException("Repetitions and duration must be greater than 0 when provided.");
+                }
+
+                if (ex.Sets is <= 0)
+                {
+                    throw new InvalidOperationException("Sets must be greater than 0 when provided.");
+                }
+
+                if (ex.RestBetweenSets is <= 0)
+                {
+                    throw new InvalidOperationException("RestBetweenSets must be greater than 0 when provided.");
+                }
+
+                if (ex.RestBetweenSets.HasValue && (!ex.Sets.HasValue || ex.Sets.Value < 2))
+                {
+                    throw new InvalidOperationException("RestBetweenSets can be set only when Sets is 2 or greater.");
                 }
             }
         }
@@ -480,7 +499,7 @@ public class PatientTrainingPlanService(
             .AsNoTracking()
             .Include(x => x.Days)
             .ThenInclude(x => x.Exercises)
-            .ThenInclude(x => x.Exercise)
+            .ThenInclude(x => x.ExerciseEntity)
             .FirstOrDefaultAsync(x => x.Id == planId && x.ClinicId == clinicId, cancellationToken);
 
         if (plan is null)
@@ -514,18 +533,20 @@ public class PatientTrainingPlanService(
                             Id = ex.Id,
                             Order = ex.Order,
                             ExerciseId = ex.ExerciseId,
-                            Exercise = new ExerciseResponseDto
+                            ExerciseEntity = new ExerciseResponseDto
                             {
-                                Id = ex.Exercise.Id,
-                                ClinicId = ex.Exercise.ClinicId,
-                                UserId = ex.Exercise.UserId,
-                                Name = ex.Exercise.Name,
-                                Description = ex.Exercise.Description,
-                                MediaUrls = ex.Exercise.MediaUrls.ToList(),
-                                IsDeleted = ex.Exercise.IsDeleted,
-                                Type = ex.Exercise.Type,
-                                Steps = ex.Exercise.Steps.ToList()
+                                Id = ex.ExerciseEntity.Id,
+                                ClinicId = ex.ExerciseEntity.ClinicId,
+                                UserId = ex.ExerciseEntity.UserId,
+                                Name = ex.ExerciseEntity.Name,
+                                Description = ex.ExerciseEntity.Description,
+                                MediaUrls = ex.ExerciseEntity.MediaUrls.ToList(),
+                                IsDeleted = ex.ExerciseEntity.IsDeleted,
+                                Type = ex.ExerciseEntity.Type,
+                                Steps = ex.ExerciseEntity.Steps.ToList()
                             },
+                            Sets = ex.Sets,
+                            RestBetweenSets = ex.RestBetweenSets,
                             Repetitions = ex.Repetitions,
                             DurationSeconds = ex.DurationSeconds,
                             Comment = ex.Comment
@@ -536,7 +557,7 @@ public class PatientTrainingPlanService(
         };
     }
 
-    private static PatientTrainingPlanDayProgressResponseDto MapDayProgress(PatientTrainingPlanDayProgress progress)
+    private static PatientTrainingPlanDayProgressResponseDto MapDayProgress(PatientTrainingPlanDayProgressEntity progress)
     {
         return new PatientTrainingPlanDayProgressResponseDto
         {

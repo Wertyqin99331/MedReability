@@ -5,14 +5,14 @@ namespace MedReability.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<Clinic> Clinics => Set<Clinic>();
-    public DbSet<User> Users => Set<User>();
-    public DbSet<DoctorPatientAssignment> DoctorPatientAssignments => Set<DoctorPatientAssignment>();
-    public DbSet<Exercise> Exercises => Set<Exercise>();
-    public DbSet<PatientTrainingPlan> PatientTrainingPlans => Set<PatientTrainingPlan>();
-    public DbSet<PatientTrainingPlanDay> PatientTrainingPlanDays => Set<PatientTrainingPlanDay>();
-    public DbSet<PatientTrainingPlanDayExercise> PatientTrainingPlanDayExercises => Set<PatientTrainingPlanDayExercise>();
-    public DbSet<PatientTrainingPlanDayProgress> PatientTrainingPlanDayProgresses => Set<PatientTrainingPlanDayProgress>();
+    public DbSet<ClinicEntity> Clinics => Set<ClinicEntity>();
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<DoctorPatientAssignmentEntity> DoctorPatientAssignments => Set<DoctorPatientAssignmentEntity>();
+    public DbSet<ExerciseEntity> Exercises => Set<ExerciseEntity>();
+    public DbSet<PatientTrainingPlanEntity> PatientTrainingPlans => Set<PatientTrainingPlanEntity>();
+    public DbSet<PatientTrainingPlanDayEntity> PatientTrainingPlanDays => Set<PatientTrainingPlanDayEntity>();
+    public DbSet<PatientTrainingPlanDayExerciseEntity> PatientTrainingPlanDayExercises => Set<PatientTrainingPlanDayExerciseEntity>();
+    public DbSet<PatientTrainingPlanDayProgressEntity> PatientTrainingPlanDayProgresses => Set<PatientTrainingPlanDayProgressEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

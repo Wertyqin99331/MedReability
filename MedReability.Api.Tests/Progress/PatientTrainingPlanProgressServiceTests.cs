@@ -117,14 +117,14 @@ public class PatientTrainingPlanProgressServiceTests
 
     private static async Task<SeedData> SeedAsync(AppDbContext db)
     {
-        var clinicA = new Clinic { Id = Guid.NewGuid(), Name = "Clinic A" };
+        var clinicA = new ClinicEntity { Id = Guid.NewGuid(), Name = "ClinicEntity A" };
         var doctorA = CreateUser(clinicA.Id, UserRole.Doctor, "doctor.a@clinic.local");
         var patientA = CreateUser(clinicA.Id, UserRole.Patient, "patient.a@clinic.local");
 
         var repetitionExercise = CreateExercise(clinicA.Id, doctorA.Id, ExerciseType.Repetition, "Repetition exercise");
         var timeExercise = CreateExercise(clinicA.Id, null, ExerciseType.Time, "Time exercise");
 
-        var plan = new PatientTrainingPlan
+        var plan = new PatientTrainingPlanEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicA.Id,
@@ -136,14 +136,14 @@ public class PatientTrainingPlanProgressServiceTests
             IsDeleted = false,
             Days =
             [
-                new PatientTrainingPlanDay
+                new PatientTrainingPlanDayEntity
                 {
                     Id = Guid.NewGuid(),
                     DayNumber = 1,
                     IsRestDay = false,
                     Exercises =
                     [
-                        new PatientTrainingPlanDayExercise
+                        new PatientTrainingPlanDayExerciseEntity
                         {
                             Id = Guid.NewGuid(),
                             Order = 1,
@@ -152,14 +152,14 @@ public class PatientTrainingPlanProgressServiceTests
                         }
                     ]
                 },
-                new PatientTrainingPlanDay
+                new PatientTrainingPlanDayEntity
                 {
                     Id = Guid.NewGuid(),
                     DayNumber = 2,
                     IsRestDay = false,
                     Exercises =
                     [
-                        new PatientTrainingPlanDayExercise
+                        new PatientTrainingPlanDayExerciseEntity
                         {
                             Id = Guid.NewGuid(),
                             Order = 1,
@@ -181,9 +181,9 @@ public class PatientTrainingPlanProgressServiceTests
         return new SeedData(clinicA.Id, patientA.Id, plan.Id);
     }
 
-    private static User CreateUser(Guid clinicId, UserRole role, string email)
+    private static UserEntity CreateUser(Guid clinicId, UserRole role, string email)
     {
-        return new User
+        return new UserEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -198,9 +198,9 @@ public class PatientTrainingPlanProgressServiceTests
         };
     }
 
-    private static Exercise CreateExercise(Guid clinicId, Guid? userId, ExerciseType type, string name)
+    private static ExerciseEntity CreateExercise(Guid clinicId, Guid? userId, ExerciseType type, string name)
     {
-        return new Exercise
+        return new ExerciseEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,

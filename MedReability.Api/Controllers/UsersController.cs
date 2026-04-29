@@ -63,8 +63,8 @@ public class UsersController(IUserService userService) : ControllerBase
         if (!deactivated)
         {
             return Problem(
-                title: "User not found",
-                detail: "User was not found in your clinic.",
+                title: "UserEntity not found",
+                detail: "UserEntity was not found in your clinic.",
                 statusCode: StatusCodes.Status404NotFound);
         }
 
@@ -88,10 +88,63 @@ public class UsersController(IUserService userService) : ControllerBase
         if (!activated)
         {
             return Problem(
-                title: "User not found",
-                detail: "User was not found in your clinic.",
+                title: "UserEntity not found",
+                detail: "UserEntity was not found in your clinic.",
                 statusCode: StatusCodes.Status404NotFound);
         }
+
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateUserProfile(
+        Guid id,
+        [FromForm] UpdateUserProfileRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        if (clinicId is null)
+        {
+            return Forbid();
+        }
+
+        var updatedProfile = await userService.UpdateUserProfileAsync(
+            clinicId.Value,
+            id,
+            request,
+            cancellationToken);
+
+        return Ok(updatedProfile);
+    }
+
+    [HttpPatch("{id:guid}/password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetUserPassword(
+        Guid id,
+        [FromBody] SetUserPasswordRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        if (clinicId is null)
+        {
+            return Forbid();
+        }
+
+        await userService.SetUserPasswordAsync(
+            clinicId.Value,
+            id,
+            request,
+            cancellationToken);
 
         return NoContent();
     }

@@ -1,14 +1,14 @@
 namespace MedReability.Domain.Entities;
 
-public class PatientTrainingPlanDayProgress
+public class PatientTrainingPlanDayProgressEntity
 {
     public Guid Id { get; set; }
 
     public Guid PatientId { get; set; }
-    public User Patient { get; set; } = null!;
+    public UserEntity Patient { get; set; } = null!;
 
     public Guid PatientTrainingPlanId { get; set; }
-    public PatientTrainingPlan PatientTrainingPlan { get; set; } = null!;
+    public PatientTrainingPlanEntity PatientTrainingPlanEntity { get; set; } = null!;
 
     public int DayNumber { get; set; }
 

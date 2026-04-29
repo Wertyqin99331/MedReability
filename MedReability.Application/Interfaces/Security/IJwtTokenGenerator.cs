@@ -4,5 +4,5 @@ namespace MedReability.Application.Interfaces.Security;
 
 public interface IJwtTokenGenerator
 {
-    (string Token, DateTime ExpiresAtUtc) Generate(User user);
+    (string Token, DateTime ExpiresAtUtc) Generate(UserEntity user);
 }

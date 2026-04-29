@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MedReability.Infrastructure.Persistence.Configurations;
 
-public class PatientTrainingPlanConfiguration : IEntityTypeConfiguration<PatientTrainingPlan>
+public class PatientTrainingPlanConfiguration : IEntityTypeConfiguration<PatientTrainingPlanEntity>
 {
-    public void Configure(EntityTypeBuilder<PatientTrainingPlan> builder)
+    public void Configure(EntityTypeBuilder<PatientTrainingPlanEntity> builder)
     {
         builder.ToTable("patient_training_plans");
         builder.HasKey(x => x.Id);
@@ -56,7 +56,7 @@ public class PatientTrainingPlanConfiguration : IEntityTypeConfiguration<Patient
         builder.HasIndex(x => x.PatientId);
         builder.HasIndex(x => x.CreatedByUserId);
 
-        builder.HasOne(x => x.Clinic)
+        builder.HasOne(x => x.ClinicEntity)
             .WithMany()
             .HasForeignKey(x => x.ClinicId)
             .OnDelete(DeleteBehavior.Restrict);

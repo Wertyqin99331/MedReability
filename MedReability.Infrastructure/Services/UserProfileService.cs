@@ -14,7 +14,7 @@ public class UserProfileService(
     IMediaStorageService mediaStorageService,
     IAccessPolicyService accessPolicyService) : IUserProfileService
 {
-    private readonly PasswordHasher<User> _passwordHasher = new();
+    private readonly PasswordHasher<UserEntity> _passwordHasher = new();
 
     public async Task<MeResponseDto> UpdateMyProfileAsync(
         Guid clinicId,
@@ -41,7 +41,7 @@ public class UserProfileService(
 
         if (emailTaken)
         {
-            throw new InvalidOperationException("User with this email already exists in your clinic.");
+            throw new InvalidOperationException("UserEntity with this email already exists in your clinic.");
         }
 
         user.Email = normalizedEmail;

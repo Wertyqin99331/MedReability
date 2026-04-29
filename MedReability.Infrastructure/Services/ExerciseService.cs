@@ -27,12 +27,12 @@ public class ExerciseService(
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new InvalidOperationException("Exercise name is required.");
+            throw new InvalidOperationException("ExerciseEntity name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(description))
         {
-            throw new InvalidOperationException("Exercise description is required.");
+            throw new InvalidOperationException("ExerciseEntity description is required.");
         }
 
         var stepTexts = request.Steps
@@ -47,10 +47,10 @@ public class ExerciseService(
 
         if (!Enum.IsDefined(request.Type))
         {
-            throw new InvalidOperationException("Exercise type is invalid.");
+            throw new InvalidOperationException("ExerciseEntity type is invalid.");
         }
 
-        var exercise = new Exercise
+        var exercise = new ExerciseEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -157,7 +157,7 @@ public class ExerciseService(
 
         if (exercise is null)
         {
-            throw new KeyNotFoundException("Exercise was not found.");
+            throw new KeyNotFoundException("ExerciseEntity was not found.");
         }
 
         return MapToDto(exercise);
@@ -176,7 +176,7 @@ public class ExerciseService(
 
         if (exercise is null)
         {
-            throw new KeyNotFoundException("Exercise was not found.");
+            throw new KeyNotFoundException("ExerciseEntity was not found.");
         }
 
         if (!accessPolicyService.IsAdminOrOwnerOrGlobal(isAdmin, userId, exercise.UserId))
@@ -189,12 +189,12 @@ public class ExerciseService(
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new InvalidOperationException("Exercise name is required.");
+            throw new InvalidOperationException("ExerciseEntity name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(description))
         {
-            throw new InvalidOperationException("Exercise description is required.");
+            throw new InvalidOperationException("ExerciseEntity description is required.");
         }
 
         var stepTexts = request.Steps
@@ -209,7 +209,7 @@ public class ExerciseService(
 
         if (!Enum.IsDefined(request.Type))
         {
-            throw new InvalidOperationException("Exercise type is invalid.");
+            throw new InvalidOperationException("ExerciseEntity type is invalid.");
         }
 
         exercise.Name = name;
@@ -251,7 +251,7 @@ public class ExerciseService(
 
         if (exercise is null)
         {
-            throw new KeyNotFoundException("Exercise was not found.");
+            throw new KeyNotFoundException("ExerciseEntity was not found.");
         }
 
         if (!accessPolicyService.IsAdminOrOwnerOrGlobal(isAdmin, userId, exercise.UserId))
@@ -283,7 +283,7 @@ public class ExerciseService(
         return uploaded.ToArray();
     }
 
-    private static ExerciseResponseDto MapToDto(Exercise exercise)
+    private static ExerciseResponseDto MapToDto(ExerciseEntity exercise)
     {
         return new ExerciseResponseDto
         {

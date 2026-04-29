@@ -30,7 +30,7 @@ public class PatientTrainingPlanServiceTests
         var data = await SeedAsync(db);
         var service = CreateService(db);
 
-        db.DoctorPatientAssignments.Add(new DoctorPatientAssignment
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = data.ClinicAId,
@@ -70,13 +70,59 @@ public class PatientTrainingPlanServiceTests
     }
 
     [Fact]
+    public async Task Create_WithRestBetweenSetsAndSetsLessThanTwo_ThrowsInvalidOperation()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        var request = BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId);
+        request.Days[0].Exercises[0].Sets = 1;
+        request.Days[0].Exercises[0].RestBetweenSets = 30;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateAsync(data.ClinicAId, data.AdminAId, isAdmin: true, request));
+    }
+
+    [Fact]
+    public async Task Create_WithSetsAndRestBetweenSets_PersistsFields()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
+        {
+            Id = Guid.NewGuid(),
+            ClinicId = data.ClinicAId,
+            DoctorId = data.DoctorAId,
+            PatientId = data.PatientAId
+        });
+        await db.SaveChangesAsync();
+
+        var request = BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId);
+        request.Days[0].Exercises[0].Sets = 2;
+        request.Days[0].Exercises[0].RestBetweenSets = 30;
+
+        var result = await service.CreateAsync(data.ClinicAId, data.DoctorAId, isAdmin: false, request);
+
+        var exercise = result.Days
+            .Single(x => x.DayNumber == 1)
+            .Exercises
+            .Single(x => x.Order == 1);
+
+        Assert.Equal(2, exercise.Sets);
+        Assert.Equal(30, exercise.RestBetweenSets);
+    }
+
+    [Fact]
     public async Task Update_NonOwnerDoctor_ThrowsUnauthorized()
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
         var service = CreateService(db);
 
-        db.DoctorPatientAssignments.Add(new DoctorPatientAssignment
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = data.ClinicAId,
@@ -112,7 +158,7 @@ public class PatientTrainingPlanServiceTests
         var data = await SeedAsync(db);
         var service = CreateService(db);
 
-        db.DoctorPatientAssignments.Add(new DoctorPatientAssignment
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = data.ClinicAId,
@@ -201,8 +247,8 @@ public class PatientTrainingPlanServiceTests
 
     private static async Task<SeedData> SeedAsync(AppDbContext db)
     {
-        var clinicA = new Clinic { Id = Guid.NewGuid(), Name = "Clinic A" };
-        var clinicB = new Clinic { Id = Guid.NewGuid(), Name = "Clinic B" };
+        var clinicA = new ClinicEntity { Id = Guid.NewGuid(), Name = "ClinicEntity A" };
+        var clinicB = new ClinicEntity { Id = Guid.NewGuid(), Name = "ClinicEntity B" };
 
         var adminA = CreateUser(clinicA.Id, UserRole.Admin, "admin.a@clinic.local");
         var doctorA = CreateUser(clinicA.Id, UserRole.Doctor, "doctor.a@clinic.local");
@@ -229,9 +275,9 @@ public class PatientTrainingPlanServiceTests
             globalExercise.Id);
     }
 
-    private static User CreateUser(Guid clinicId, UserRole role, string email)
+    private static UserEntity CreateUser(Guid clinicId, UserRole role, string email)
     {
-        return new User
+        return new UserEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -246,9 +292,9 @@ public class PatientTrainingPlanServiceTests
         };
     }
 
-    private static Exercise CreateExercise(Guid clinicId, Guid? userId, ExerciseType type, string name)
+    private static ExerciseEntity CreateExercise(Guid clinicId, Guid? userId, ExerciseType type, string name)
     {
-        return new Exercise
+        return new ExerciseEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,

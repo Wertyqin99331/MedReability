@@ -25,7 +25,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,7 +43,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("clinics", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignmentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -80,7 +80,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("doctor_patient_assignments", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -144,45 +144,45 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignmentEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany()
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Doctor")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Doctor")
                         .WithMany()
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
 
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany("Users")
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Navigation("Users");
                 });

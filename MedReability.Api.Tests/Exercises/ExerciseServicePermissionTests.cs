@@ -235,18 +235,18 @@ public class ExerciseServicePermissionTests
 
     private static async Task<SeedData> SeedAsync(AppDbContext db)
     {
-        var clinicA = new Clinic { Id = Guid.NewGuid(), Name = "Clinic A" };
-        var clinicB = new Clinic { Id = Guid.NewGuid(), Name = "Clinic B" };
+        var clinicA = new ClinicEntity { Id = Guid.NewGuid(), Name = "ClinicEntity A" };
+        var clinicB = new ClinicEntity { Id = Guid.NewGuid(), Name = "ClinicEntity B" };
 
         var adminA = CreateUser(clinicA.Id, UserRole.Admin, "admin.a@clinic.local");
         var doctorA = CreateUser(clinicA.Id, UserRole.Doctor, "doctor.a@clinic.local");
         var doctorA2 = CreateUser(clinicA.Id, UserRole.Doctor, "doctor.a2@clinic.local");
         var doctorB = CreateUser(clinicB.Id, UserRole.Doctor, "doctor.b@clinic.local");
 
-        var ownExercise = CreateExercise(clinicA.Id, doctorA.Id, "Own Exercise");
-        var globalExercise = CreateExercise(clinicA.Id, null, "Global Exercise");
-        var otherDoctorExercise = CreateExercise(clinicA.Id, doctorA2.Id, "Other Doctor Exercise");
-        var clinicBExercise = CreateExercise(clinicB.Id, doctorB.Id, "Clinic B Exercise");
+        var ownExercise = CreateExercise(clinicA.Id, doctorA.Id, "Own ExerciseEntity");
+        var globalExercise = CreateExercise(clinicA.Id, null, "Global ExerciseEntity");
+        var otherDoctorExercise = CreateExercise(clinicA.Id, doctorA2.Id, "Other Doctor ExerciseEntity");
+        var clinicBExercise = CreateExercise(clinicB.Id, doctorB.Id, "ClinicEntity B ExerciseEntity");
 
         db.Clinics.AddRange(clinicA, clinicB);
         db.Users.AddRange(adminA, doctorA, doctorA2, doctorB);
@@ -264,9 +264,9 @@ public class ExerciseServicePermissionTests
             clinicBExercise.Id);
     }
 
-    private static User CreateUser(Guid clinicId, UserRole role, string email)
+    private static UserEntity CreateUser(Guid clinicId, UserRole role, string email)
     {
-        return new User
+        return new UserEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -281,9 +281,9 @@ public class ExerciseServicePermissionTests
         };
     }
 
-    private static Exercise CreateExercise(Guid clinicId, Guid? userId, string name)
+    private static ExerciseEntity CreateExercise(Guid clinicId, Guid? userId, string name)
     {
-        return new Exercise
+        return new ExerciseEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,

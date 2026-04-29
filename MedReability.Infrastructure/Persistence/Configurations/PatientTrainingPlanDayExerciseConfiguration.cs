@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MedReability.Infrastructure.Persistence.Configurations;
 
-public class PatientTrainingPlanDayExerciseConfiguration : IEntityTypeConfiguration<PatientTrainingPlanDayExercise>
+public class PatientTrainingPlanDayExerciseConfiguration : IEntityTypeConfiguration<PatientTrainingPlanDayExerciseEntity>
 {
-    public void Configure(EntityTypeBuilder<PatientTrainingPlanDayExercise> builder)
+    public void Configure(EntityTypeBuilder<PatientTrainingPlanDayExerciseEntity> builder)
     {
         builder.ToTable("patient_training_plan_day_exercises");
         builder.HasKey(x => x.Id);
@@ -30,6 +30,14 @@ public class PatientTrainingPlanDayExerciseConfiguration : IEntityTypeConfigurat
             .HasColumnName("repetitions")
             .IsRequired(false);
 
+        builder.Property(x => x.Sets)
+            .HasColumnName("sets")
+            .IsRequired(false);
+
+        builder.Property(x => x.RestBetweenSets)
+            .HasColumnName("rest_between_sets")
+            .IsRequired(false);
+
         builder.Property(x => x.DurationSeconds)
             .HasColumnName("duration_seconds")
             .IsRequired(false);
@@ -48,12 +56,18 @@ public class PatientTrainingPlanDayExerciseConfiguration : IEntityTypeConfigurat
             "CK_patient_training_plan_day_exercises_prescription",
             "(repetitions IS NOT NULL AND duration_seconds IS NULL) OR (repetitions IS NULL AND duration_seconds IS NOT NULL)"));
 
-        builder.HasOne(x => x.PatientTrainingPlanDay)
+        builder.ToTable(x => x.HasCheckConstraint(
+            "CK_patient_training_plan_day_exercises_sets_and_rest",
+            "(sets IS NULL OR sets > 0) AND " +
+            "(rest_between_sets IS NULL OR rest_between_sets > 0) AND " +
+            "(rest_between_sets IS NULL OR (sets IS NOT NULL AND sets >= 2))"));
+
+        builder.HasOne(x => x.PatientTrainingPlanDayEntity)
             .WithMany(x => x.Exercises)
             .HasForeignKey(x => x.PatientTrainingPlanDayId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Exercise)
+        builder.HasOne(x => x.ExerciseEntity)
             .WithMany()
             .HasForeignKey(x => x.ExerciseId)
             .OnDelete(DeleteBehavior.Restrict);

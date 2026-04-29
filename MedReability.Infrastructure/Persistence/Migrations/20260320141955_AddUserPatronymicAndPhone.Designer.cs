@@ -25,7 +25,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,7 +43,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("clinics", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -107,18 +107,18 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany("Users")
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Navigation("Users");
                 });

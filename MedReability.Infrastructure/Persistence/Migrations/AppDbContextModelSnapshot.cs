@@ -22,7 +22,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -40,7 +40,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("clinics", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignmentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -71,7 +71,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("doctor_patient_assignments", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Exercise", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ExerciseEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -127,7 +127,139 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("exercises", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlan", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("DayNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_number");
+
+                    b.Property<bool>("IsRestDay")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_rest_day");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("PatientTrainingPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_training_plan_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientTrainingPlanId", "DayNumber")
+                        .IsUnique();
+
+                    b.ToTable("patient_training_plan_days", (string)null);
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExerciseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("comment");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_seconds");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exercise_id");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer")
+                        .HasColumnName("order");
+
+                    b.Property<Guid>("PatientTrainingPlanDayId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_training_plan_day_id");
+
+                    b.Property<int?>("Repetitions")
+                        .HasColumnType("integer")
+                        .HasColumnName("repetitions");
+
+                    b.Property<int?>("RestBetweenSets")
+                        .HasColumnType("integer")
+                        .HasColumnName("rest_between_sets");
+
+                    b.Property<int?>("Sets")
+                        .HasColumnType("integer")
+                        .HasColumnName("sets");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("PatientTrainingPlanDayId", "Order")
+                        .IsUnique();
+
+                    b.ToTable("patient_training_plan_day_exercises", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_patient_training_plan_day_exercises_prescription", "(repetitions IS NOT NULL AND duration_seconds IS NULL) OR (repetitions IS NULL AND duration_seconds IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_patient_training_plan_day_exercises_sets_and_rest", "(sets IS NULL OR sets > 0) AND (rest_between_sets IS NULL OR rest_between_sets > 0) AND (rest_between_sets IS NULL OR (sets IS NOT NULL AND sets >= 2))");
+                        });
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgressEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<int>("DayNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_number");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
+
+                    b.Property<Guid>("PatientTrainingPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_training_plan_id");
+
+                    b.Property<int?>("StateRating")
+                        .HasColumnType("integer")
+                        .HasColumnName("state_rating");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientTrainingPlanId");
+
+                    b.HasIndex("PatientId", "PatientTrainingPlanId", "DayNumber")
+                        .IsUnique();
+
+                    b.ToTable("patient_training_plan_day_progresses", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_patient_training_plan_day_progresses_state_rating", "state_rating IS NULL OR (state_rating >= 1 AND state_rating <= 5)");
+                        });
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -184,129 +316,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("patient_training_plans", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDay", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("DayNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("day_number");
-
-                    b.Property<bool>("IsRestDay")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_rest_day");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<Guid>("PatientTrainingPlanId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("patient_training_plan_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PatientTrainingPlanId", "DayNumber")
-                        .IsUnique();
-
-                    b.ToTable("patient_training_plan_days", (string)null);
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExercise", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("comment");
-
-                    b.Property<int?>("DurationSeconds")
-                        .HasColumnType("integer")
-                        .HasColumnName("duration_seconds");
-
-                    b.Property<Guid>("ExerciseId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("exercise_id");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer")
-                        .HasColumnName("order");
-
-                    b.Property<Guid>("PatientTrainingPlanDayId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("patient_training_plan_day_id");
-
-                    b.Property<int?>("Repetitions")
-                        .HasColumnType("integer")
-                        .HasColumnName("repetitions");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExerciseId");
-
-                    b.HasIndex("PatientTrainingPlanDayId", "Order")
-                        .IsUnique();
-
-                    b.ToTable("patient_training_plan_day_exercises", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_patient_training_plan_day_exercises_prescription", "(repetitions IS NOT NULL AND duration_seconds IS NULL) OR (repetitions IS NULL AND duration_seconds IS NOT NULL)");
-                        });
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgress", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completed_at_utc");
-
-                    b.Property<int>("DayNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("day_number");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("patient_id");
-
-                    b.Property<Guid>("PatientTrainingPlanId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("patient_training_plan_id");
-
-                    b.Property<int?>("StateRating")
-                        .HasColumnType("integer")
-                        .HasColumnName("state_rating");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PatientTrainingPlanId");
-
-                    b.HasIndex("PatientId", "PatientTrainingPlanId", "DayNumber")
-                        .IsUnique();
-
-                    b.ToTable("patient_training_plan_day_progresses", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_patient_training_plan_day_progresses_state_rating", "state_rating IS NULL OR (state_rating >= 1 AND state_rating <= 5)");
-                        });
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -375,151 +385,151 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignment", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.DoctorPatientAssignmentEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany()
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Doctor")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Doctor")
                         .WithMany()
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
 
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Exercise", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ExerciseEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany()
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "User")
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "UserEntity")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
 
-                    b.Navigation("User");
+                    b.Navigation("UserEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlan", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
-                        .WithMany()
-                        .HasForeignKey("ClinicId")
+                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanEntity", "PatientTrainingPlanEntity")
+                        .WithMany("Days")
+                        .HasForeignKey("PatientTrainingPlanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "CreatedByUser")
+                    b.Navigation("PatientTrainingPlanEntity");
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExerciseEntity", b =>
+                {
+                    b.HasOne("MedReability.Domain.Entities.ExerciseEntity", "ExerciseEntity")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId")
+                        .HasForeignKey("ExerciseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
+                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", "PatientTrainingPlanDayEntity")
+                        .WithMany("Exercises")
+                        .HasForeignKey("PatientTrainingPlanDayId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExerciseEntity");
+
+                    b.Navigation("PatientTrainingPlanDayEntity");
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgressEntity", b =>
+                {
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanEntity", "PatientTrainingPlanEntity")
+                        .WithMany()
+                        .HasForeignKey("PatientTrainingPlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("PatientTrainingPlanEntity");
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanEntity", b =>
+                {
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
+                        .WithMany()
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MedReability.Domain.Entities.UserEntity", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ClinicEntity");
 
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDay", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.UserEntity", b =>
                 {
-                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlan", "PatientTrainingPlan")
-                        .WithMany("Days")
-                        .HasForeignKey("PatientTrainingPlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("PatientTrainingPlan");
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayExercise", b =>
-                {
-                    b.HasOne("MedReability.Domain.Entities.Exercise", "Exercise")
-                        .WithMany()
-                        .HasForeignKey("ExerciseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlanDay", "PatientTrainingPlanDay")
-                        .WithMany("Exercises")
-                        .HasForeignKey("PatientTrainingPlanDayId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Exercise");
-
-                    b.Navigation("PatientTrainingPlanDay");
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayProgress", b =>
-                {
-                    b.HasOne("MedReability.Domain.Entities.User", "Patient")
-                        .WithMany()
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MedReability.Domain.Entities.PatientTrainingPlan", "PatientTrainingPlan")
-                        .WithMany()
-                        .HasForeignKey("PatientTrainingPlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Patient");
-
-                    b.Navigation("PatientTrainingPlan");
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.User", b =>
-                {
-                    b.HasOne("MedReability.Domain.Entities.Clinic", "Clinic")
+                    b.HasOne("MedReability.Domain.Entities.ClinicEntity", "ClinicEntity")
                         .WithMany("Users")
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
+                    b.Navigation("ClinicEntity");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.Clinic", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.ClinicEntity", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlan", b =>
-                {
-                    b.Navigation("Days");
-                });
-
-            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDay", b =>
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanDayEntity", b =>
                 {
                     b.Navigation("Exercises");
+                });
+
+            modelBuilder.Entity("MedReability.Domain.Entities.PatientTrainingPlanEntity", b =>
+                {
+                    b.Navigation("Days");
                 });
 #pragma warning restore 612, 618
         }

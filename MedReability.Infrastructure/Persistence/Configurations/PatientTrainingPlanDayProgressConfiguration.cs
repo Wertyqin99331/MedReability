@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MedReability.Infrastructure.Persistence.Configurations;
 
-public class PatientTrainingPlanDayProgressConfiguration : IEntityTypeConfiguration<PatientTrainingPlanDayProgress>
+public class PatientTrainingPlanDayProgressConfiguration : IEntityTypeConfiguration<PatientTrainingPlanDayProgressEntity>
 {
-    public void Configure(EntityTypeBuilder<PatientTrainingPlanDayProgress> builder)
+    public void Configure(EntityTypeBuilder<PatientTrainingPlanDayProgressEntity> builder)
     {
         builder.ToTable("patient_training_plan_day_progresses");
         builder.HasKey(x => x.Id);
@@ -53,7 +53,7 @@ public class PatientTrainingPlanDayProgressConfiguration : IEntityTypeConfigurat
             .HasForeignKey(x => x.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.PatientTrainingPlan)
+        builder.HasOne(x => x.PatientTrainingPlanEntity)
             .WithMany()
             .HasForeignKey(x => x.PatientTrainingPlanId)
             .OnDelete(DeleteBehavior.Restrict);

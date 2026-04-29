@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MedReability.Infrastructure.Persistence.Configurations;
 
-public class ClinicConfiguration : IEntityTypeConfiguration<Clinic>
+public class ClinicConfiguration : IEntityTypeConfiguration<ClinicEntity>
 {
-    public void Configure(EntityTypeBuilder<Clinic> builder)
+    public void Configure(EntityTypeBuilder<ClinicEntity> builder)
     {
         builder.ToTable("clinics");
         builder.HasKey(x => x.Id);

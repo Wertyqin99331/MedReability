@@ -12,7 +12,7 @@ public class AuthService(
     AppDbContext dbContext,
     IJwtTokenGenerator tokenGenerator) : IAuthService
 {
-    private readonly PasswordHasher<User> _passwordHasher = new();
+    private readonly PasswordHasher<UserEntity> _passwordHasher = new();
 
     public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {

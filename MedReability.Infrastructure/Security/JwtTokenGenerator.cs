@@ -13,7 +13,7 @@ public class JwtTokenGenerator(IOptions<JwtOptions> jwtOptions) : IJwtTokenGener
 {
     private readonly JwtOptions _options = jwtOptions.Value;
 
-    public (string Token, DateTime ExpiresAtUtc) Generate(User user)
+    public (string Token, DateTime ExpiresAtUtc) Generate(UserEntity user)
     {
         var expiresAtUtc = DateTime.UtcNow.AddMinutes(_options.AccessTokenMinutes);
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));

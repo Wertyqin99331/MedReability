@@ -1,6 +1,5 @@
 using MedReability.Application.DTOs.Common;
 using MedReability.Application.DTOs.Users;
-using MedReability.Application.Interfaces.Security;
 using MedReability.Application.Interfaces.Services;
 using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
@@ -12,23 +11,23 @@ namespace MedReability.Infrastructure.Services;
 
 public class UserService(
     AppDbContext dbContext,
-    IMediaStorageService mediaStorageService,
-    IAccessPolicyService accessPolicyService) : IUserService
+    IMediaStorageService mediaStorageService) : IUserService
 {
-    private readonly PasswordHasher<User> _passwordHasher = new();
+    private readonly PasswordHasher<UserEntity> _passwordHasher = new();
 
     public async Task<UserResponseDto> CreateUserAsync(Guid clinicId, CreateUserRequestDto request, CancellationToken cancellationToken = default)
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
         var emailExists = await dbContext.Users
-            .AnyAsync(x => x.ClinicId == clinicId && x.Email == email, cancellationToken);
+            .WithClinicEntity(x => x.ClinicId, clinicId)
+            .AnyAsync(x => x.Email == email, cancellationToken);
         if (emailExists)
         {
-            throw new InvalidOperationException("User with this email already exists.");
+            throw new InvalidOperationException("UserEntity with this email already exists.");
         }
 
-        var user = new User
+        var user = new UserEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -60,9 +59,8 @@ public class UserService(
             _ => query.PageSize
         };
 
-        var usersQuery = dbContext.Users.AsQueryable();
-
-        usersQuery = usersQuery.Where(x => x.ClinicId == clinicId);
+        var usersQuery = dbContext.Users
+            .WithClinicEntity(x => x.ClinicId, clinicId);
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -112,12 +110,77 @@ public class UserService(
         };
     }
 
+    public async Task<UserResponseDto> UpdateUserProfileAsync(
+        Guid clinicId,
+        Guid userId,
+        UpdateUserProfileRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users
+            .WithClinicEntity(x => x.ClinicId, clinicId)
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            throw new KeyNotFoundException("User was not found in your clinic.");
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var emailExists = await dbContext.Users
+            .WithClinicEntity(x => x.ClinicId, clinicId)
+            .AnyAsync(x => x.Email == normalizedEmail && x.Id != userId, cancellationToken);
+        if (emailExists)
+        {
+            throw new InvalidOperationException("User with this email already exists.");
+        }
+
+        user.Email = normalizedEmail;
+        user.FirstName = request.FirstName.Trim();
+        user.Patronymic = request.Patronymic.Trim();
+        user.LastName = request.LastName.Trim();
+        user.PhoneNumber = request.PhoneNumber.Trim();
+
+        if (request.Image is not null && request.Image.Length > 0)
+        {
+            var previousImageUrl = user.ImageUrl;
+            user.ImageUrl = await mediaStorageService.UploadAsync("users", request.Image, cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(previousImageUrl))
+            {
+                await mediaStorageService.DeleteFileByUrlAsync(previousImageUrl, cancellationToken);
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Map(user);
+    }
+
+    public async Task SetUserPasswordAsync(
+        Guid clinicId,
+        Guid userId,
+        SetUserPasswordRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users
+            .WithClinicEntity(x => x.ClinicId, clinicId)
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            throw new KeyNotFoundException("User was not found in your clinic.");
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<bool> DeactivateUserAsync(Guid clinicId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await dbContext.Users
+            .WithClinicEntity(x => x.ClinicId, clinicId)
             .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
-        if (user is null || !accessPolicyService.IsSameClinic(clinicId, user.ClinicId))
+        if (user is null)
         {
             return false;
         }
@@ -135,9 +198,10 @@ public class UserService(
     public async Task<bool> ActivateUserAsync(Guid clinicId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await dbContext.Users
+            .WithClinicEntity(x => x.ClinicId, clinicId)
             .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
-        if (user is null || !accessPolicyService.IsSameClinic(clinicId, user.ClinicId))
+        if (user is null)
         {
             return false;
         }
@@ -152,7 +216,7 @@ public class UserService(
         return true;
     }
 
-    private static UserResponseDto Map(User user)
+    private static UserResponseDto Map(UserEntity user)
     {
         return new UserResponseDto
         {

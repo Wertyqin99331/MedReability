@@ -20,18 +20,18 @@ public static class TestData
     public const string Clinic1PatientEmail = "patient1@tenant.local";
     public const string Clinic1PatientPassword = "PatientClinic1!";
 
-    public static List<Clinic> BuildClinics()
+    public static List<ClinicEntity> BuildClinics()
     {
         return
         [
-            new Clinic { Id = Clinic1Id, Name = "Clinic One" },
-            new Clinic { Id = Clinic2Id, Name = "Clinic Two" }
+            new ClinicEntity { Id = Clinic1Id, Name = "ClinicEntity One" },
+            new ClinicEntity { Id = Clinic2Id, Name = "ClinicEntity Two" }
         ];
     }
 
-    public static List<User> BuildUsers()
+    public static List<UserEntity> BuildUsers()
     {
-        var hasher = new PasswordHasher<User>();
+        var hasher = new PasswordHasher<UserEntity>();
 
         var clinic1Admin = CreateUser(
             Clinic1AdminId,
@@ -85,7 +85,7 @@ public static class TestData
         return [clinic1Admin, clinic2Admin, clinic1Patient, clinic2Patient];
     }
 
-    private static User CreateUser(
+    private static UserEntity CreateUser(
         Guid id,
         Guid clinicId,
         string email,
@@ -96,7 +96,7 @@ public static class TestData
         string phoneNumber,
         UserRole role)
     {
-        return new User
+        return new UserEntity
         {
             Id = id,
             ClinicId = clinicId,

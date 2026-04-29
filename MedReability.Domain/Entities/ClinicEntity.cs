@@ -1,9 +1,9 @@
 namespace MedReability.Domain.Entities;
 
-public class Clinic
+public class ClinicEntity
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
 
-    public List<User> Users { get; set; } = [];
+    public List<UserEntity> Users { get; set; } = [];
 }

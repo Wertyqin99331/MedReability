@@ -32,7 +32,7 @@ public class DoctorPatientAssignmentService(
             throw new InvalidOperationException("This doctor-patient assignment already exists.");
         }
 
-        var assignment = new DoctorPatientAssignment
+        var assignment = new DoctorPatientAssignmentEntity
         {
             Id = Guid.NewGuid(),
             ClinicId = clinicId,
@@ -181,7 +181,7 @@ public class DoctorPatientAssignmentService(
             .AsNoTracking()
             .Include(x => x.Days)
             .ThenInclude(x => x.Exercises)
-            .ThenInclude(x => x.Exercise)
+            .ThenInclude(x => x.ExerciseEntity)
             .FirstAsync(x => x.Id == latestPlan.Id, cancellationToken);
 
         var progresses = await dbContext.PatientTrainingPlanDayProgresses
@@ -246,18 +246,20 @@ public class DoctorPatientAssignmentService(
                 .Select(x => new DoctorPatientTodayWorkoutExerciseDto
                 {
                     Order = x.Order,
-                    Exercise = new ExerciseResponseDto
+                    ExerciseEntity = new ExerciseResponseDto
                     {
-                        Id = x.Exercise.Id,
-                        ClinicId = x.Exercise.ClinicId,
-                        UserId = x.Exercise.UserId,
-                        Name = x.Exercise.Name,
-                        Description = x.Exercise.Description,
-                        MediaUrls = x.Exercise.MediaUrls.ToList(),
-                        IsDeleted = x.Exercise.IsDeleted,
-                        Type = x.Exercise.Type,
-                        Steps = x.Exercise.Steps.ToList()
+                        Id = x.ExerciseEntity.Id,
+                        ClinicId = x.ExerciseEntity.ClinicId,
+                        UserId = x.ExerciseEntity.UserId,
+                        Name = x.ExerciseEntity.Name,
+                        Description = x.ExerciseEntity.Description,
+                        MediaUrls = x.ExerciseEntity.MediaUrls.ToList(),
+                        IsDeleted = x.ExerciseEntity.IsDeleted,
+                        Type = x.ExerciseEntity.Type,
+                        Steps = x.ExerciseEntity.Steps.ToList()
                     },
+                    Sets = x.Sets,
+                    RestBetweenSets = x.RestBetweenSets,
                     Repetitions = x.Repetitions,
                     DurationSeconds = x.DurationSeconds,
                     Comment = x.Comment
@@ -455,7 +457,7 @@ public class DoctorPatientAssignmentService(
         }
     }
 
-    private static DoctorPatientAssignmentResponseDto Map(DoctorPatientAssignment assignment)
+    private static DoctorPatientAssignmentResponseDto Map(DoctorPatientAssignmentEntity assignment)
     {
         return new DoctorPatientAssignmentResponseDto
         {

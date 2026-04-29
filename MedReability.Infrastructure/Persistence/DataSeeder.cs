@@ -14,25 +14,25 @@ public class DataSeeder(AppDbContext dbContext)
     private static readonly Guid SeedPatientId = Guid.Parse("44444444-4444-4444-4444-444444444444");
     private static readonly Guid SeedClinic2AdminId = Guid.Parse("66666666-6666-6666-6666-666666666666");
 
-    private readonly PasswordHasher<User> _passwordHasher = new();
+    private readonly PasswordHasher<UserEntity> _passwordHasher = new();
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         if (!await dbContext.Clinics.AnyAsync(x => x.Id == SeedClinicId, cancellationToken))
         {
-            dbContext.Clinics.Add(new Clinic
+            dbContext.Clinics.Add(new ClinicEntity
             {
                 Id = SeedClinicId,
-                Name = "Default Clinic"
+                Name = "Default ClinicEntity"
             });
         }
 
         if (!await dbContext.Clinics.AnyAsync(x => x.Id == SeedClinic2Id, cancellationToken))
         {
-            dbContext.Clinics.Add(new Clinic
+            dbContext.Clinics.Add(new ClinicEntity
             {
                 Id = SeedClinic2Id,
-                Name = "Second Clinic"
+                Name = "Second ClinicEntity"
             });
         }
 
@@ -43,7 +43,7 @@ public class DataSeeder(AppDbContext dbContext)
                 SeedClinicId,
                 "admin@clinic.local",
                 "Admin123!",
-                "Clinic",
+                "ClinicEntity",
                 "Ivanovich",
                 "Admin",
                 "+79000000001",
@@ -95,7 +95,7 @@ public class DataSeeder(AppDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private User CreateUser(
+    private UserEntity CreateUser(
         Guid id,
         Guid clinicId,
         string email,
@@ -106,7 +106,7 @@ public class DataSeeder(AppDbContext dbContext)
         string phoneNumber,
         UserRole role)
     {
-        var user = new User
+        var user = new UserEntity
         {
             Id = id,
             ClinicId = clinicId,
