@@ -17,5 +17,11 @@ public class UpdateExerciseFormRequest
     [Required]
     public ExerciseType Type { get; set; }
 
+    public List<string> ExerciseTypes { get; set; } = [];
+
+    public List<string> BodyParts { get; set; } = [];
+
+    public List<string> Inventory { get; set; } = [];
+
     public List<IFormFile>? MediaFiles { get; set; }
 }

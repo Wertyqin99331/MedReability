@@ -14,5 +14,8 @@ public class ExerciseEntity
     public UserEntity? UserEntity { get; set; }
     public bool IsDeleted { get; set; }
     public ExerciseType Type { get; set; }
+    public string[] ExerciseTypes { get; set; } = [];
+    public string[] BodyParts { get; set; } = [];
+    public string[] Inventory { get; set; } = [];
     public string[] Steps { get; set; } = [];
 }

@@ -50,6 +50,19 @@ public class ExerciseService(
             throw new InvalidOperationException("ExerciseEntity type is invalid.");
         }
 
+        var exerciseTypes = NormalizeAllowedValues(
+            request.ExerciseTypes,
+            ExerciseFilterOptions.ExerciseTypes,
+            "exercise type");
+        var bodyParts = NormalizeAllowedValues(
+            request.BodyParts,
+            ExerciseFilterOptions.BodyParts,
+            "body part");
+        var inventory = NormalizeAllowedValues(
+            request.Inventory,
+            ExerciseFilterOptions.Inventory,
+            "inventory");
+
         var exercise = new ExerciseEntity
         {
             Id = Guid.NewGuid(),
@@ -60,6 +73,9 @@ public class ExerciseService(
             MediaUrls = await UploadMediaUrlsAsync(request.MediaFiles, cancellationToken),
             IsDeleted = false,
             Type = request.Type,
+            ExerciseTypes = exerciseTypes,
+            BodyParts = bodyParts,
+            Inventory = inventory,
             Steps = stepTexts.ToArray()
         };
 
@@ -108,6 +124,93 @@ public class ExerciseService(
             exercisesQuery = exercisesQuery.Where(x => query.Types.Contains(x.Type));
         }
 
+        string[]? exerciseTypesFilter = null;
+        string[]? bodyPartsFilter = null;
+        string[]? inventoryFilter = null;
+
+        if (query.ExerciseTypes is { Count: > 0 })
+        {
+            exerciseTypesFilter = NormalizeAllowedValues(
+                query.ExerciseTypes,
+                ExerciseFilterOptions.ExerciseTypes,
+                "exercise type");
+        }
+
+        if (query.BodyParts is { Count: > 0 })
+        {
+            bodyPartsFilter = NormalizeAllowedValues(
+                query.BodyParts,
+                ExerciseFilterOptions.BodyParts,
+                "body part");
+        }
+
+        if (query.Inventory is { Count: > 0 })
+        {
+            inventoryFilter = NormalizeAllowedValues(
+                query.Inventory,
+                ExerciseFilterOptions.Inventory,
+                "inventory");
+        }
+
+        if (dbContext.Database.IsInMemory() &&
+            (exerciseTypesFilter is not null || bodyPartsFilter is not null || inventoryFilter is not null))
+        {
+            var filteredExercises = (await exercisesQuery.ToListAsync(cancellationToken))
+                .AsEnumerable();
+
+            if (exerciseTypesFilter is not null)
+            {
+                filteredExercises = filteredExercises.Where(x =>
+                    x.ExerciseTypes.Any(type => exerciseTypesFilter.Contains(type)));
+            }
+
+            if (bodyPartsFilter is not null)
+            {
+                filteredExercises = filteredExercises.Where(x =>
+                    x.BodyParts.Any(bodyPart => bodyPartsFilter.Contains(bodyPart)));
+            }
+
+            if (inventoryFilter is not null)
+            {
+                filteredExercises = filteredExercises.Where(x =>
+                    x.Inventory.Any(item => inventoryFilter.Contains(item)));
+            }
+
+            var filteredItems = filteredExercises
+                .OrderBy(x => x.Name)
+                .ToList();
+
+            return new PagedResultDto<ExerciseResponseDto>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = filteredItems.Count,
+                Items = filteredItems
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(MapToDto)
+                    .ToList()
+            };
+        }
+
+        if (exerciseTypesFilter is not null)
+        {
+            exercisesQuery = exercisesQuery.Where(x =>
+                exerciseTypesFilter.Any(type => x.ExerciseTypes.Contains(type)));
+        }
+
+        if (bodyPartsFilter is not null)
+        {
+            exercisesQuery = exercisesQuery.Where(x =>
+                bodyPartsFilter.Any(bodyPart => x.BodyParts.Contains(bodyPart)));
+        }
+
+        if (inventoryFilter is not null)
+        {
+            exercisesQuery = exercisesQuery.Where(x =>
+                inventoryFilter.Any(item => x.Inventory.Contains(item)));
+        }
+
         var totalCount = await exercisesQuery.CountAsync(cancellationToken);
 
         var items = await exercisesQuery
@@ -124,6 +227,9 @@ public class ExerciseService(
                 MediaUrls = x.MediaUrls.ToList(),
                 IsDeleted = x.IsDeleted,
                 Type = x.Type,
+                ExerciseTypes = x.ExerciseTypes.ToList(),
+                BodyParts = x.BodyParts.ToList(),
+                Inventory = x.Inventory.ToList(),
                 Steps = x.Steps.ToList()
             })
             .ToListAsync(cancellationToken);
@@ -135,6 +241,19 @@ public class ExerciseService(
             TotalCount = totalCount,
             Items = items
         };
+    }
+
+    public Task<ExerciseFilterOptionsDto> GetFilterOptionsAsync(CancellationToken cancellationToken = default)
+    {
+        var options = new ExerciseFilterOptionsDto
+        {
+            TrackingTypes = Enum.GetValues<ExerciseType>().ToList(),
+            ExerciseTypes = ExerciseFilterOptions.ExerciseTypes.ToList(),
+            BodyParts = ExerciseFilterOptions.BodyParts.ToList(),
+            Inventory = ExerciseFilterOptions.Inventory.ToList()
+        };
+
+        return Task.FromResult(options);
     }
 
     public async Task<ExerciseResponseDto> GetExerciseByIdAsync(
@@ -212,9 +331,25 @@ public class ExerciseService(
             throw new InvalidOperationException("ExerciseEntity type is invalid.");
         }
 
+        var exerciseTypes = NormalizeAllowedValues(
+            request.ExerciseTypes,
+            ExerciseFilterOptions.ExerciseTypes,
+            "exercise type");
+        var bodyParts = NormalizeAllowedValues(
+            request.BodyParts,
+            ExerciseFilterOptions.BodyParts,
+            "body part");
+        var inventory = NormalizeAllowedValues(
+            request.Inventory,
+            ExerciseFilterOptions.Inventory,
+            "inventory");
+
         exercise.Name = name;
         exercise.Description = description;
         exercise.Type = request.Type;
+        exercise.ExerciseTypes = exerciseTypes;
+        exercise.BodyParts = bodyParts;
+        exercise.Inventory = inventory;
         exercise.Steps = stepTexts.ToArray();
 
         if (request.MediaFiles is { Count: > 0 })
@@ -283,6 +418,42 @@ public class ExerciseService(
         return uploaded.ToArray();
     }
 
+    private static string[] NormalizeAllowedValues(
+        IEnumerable<string>? values,
+        IReadOnlyCollection<string> allowedValues,
+        string fieldName)
+    {
+        if (values is null)
+        {
+            return [];
+        }
+
+        var allowedByValue = allowedValues.ToDictionary(x => x, StringComparer.OrdinalIgnoreCase);
+        var normalized = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rawValue in values)
+        {
+            var value = rawValue.Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            if (!allowedByValue.TryGetValue(value, out var allowedValue))
+            {
+                throw new InvalidOperationException($"Invalid {fieldName}: {value}.");
+            }
+
+            if (seen.Add(allowedValue))
+            {
+                normalized.Add(allowedValue);
+            }
+        }
+
+        return normalized.ToArray();
+    }
+
     private static ExerciseResponseDto MapToDto(ExerciseEntity exercise)
     {
         return new ExerciseResponseDto
@@ -295,6 +466,9 @@ public class ExerciseService(
             MediaUrls = exercise.MediaUrls.ToList(),
             IsDeleted = exercise.IsDeleted,
             Type = exercise.Type,
+            ExerciseTypes = exercise.ExerciseTypes.ToList(),
+            BodyParts = exercise.BodyParts.ToList(),
+            Inventory = exercise.Inventory.ToList(),
             Steps = exercise.Steps.ToList()
         };
     }

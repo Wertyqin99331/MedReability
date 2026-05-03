@@ -543,6 +543,9 @@ public class PatientTrainingPlanService(
                                 MediaUrls = ex.ExerciseEntity.MediaUrls.ToList(),
                                 IsDeleted = ex.ExerciseEntity.IsDeleted,
                                 Type = ex.ExerciseEntity.Type,
+                                ExerciseTypes = ex.ExerciseEntity.ExerciseTypes.ToList(),
+                                BodyParts = ex.ExerciseEntity.BodyParts.ToList(),
+                                Inventory = ex.ExerciseEntity.Inventory.ToList(),
                                 Steps = ex.ExerciseEntity.Steps.ToList()
                             },
                             Sets = ex.Sets,

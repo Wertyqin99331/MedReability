@@ -256,6 +256,9 @@ public class DoctorPatientAssignmentService(
                         MediaUrls = x.ExerciseEntity.MediaUrls.ToList(),
                         IsDeleted = x.ExerciseEntity.IsDeleted,
                         Type = x.ExerciseEntity.Type,
+                        ExerciseTypes = x.ExerciseEntity.ExerciseTypes.ToList(),
+                        BodyParts = x.ExerciseEntity.BodyParts.ToList(),
+                        Inventory = x.ExerciseEntity.Inventory.ToList(),
                         Steps = x.ExerciseEntity.Steps.ToList()
                     },
                     Sets = x.Sets,

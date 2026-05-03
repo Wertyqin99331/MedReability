@@ -12,5 +12,8 @@ public class ExerciseResponseDto
     public List<string> MediaUrls { get; set; } = [];
     public bool IsDeleted { get; set; }
     public ExerciseType Type { get; set; }
+    public List<string> ExerciseTypes { get; set; } = [];
+    public List<string> BodyParts { get; set; } = [];
+    public List<string> Inventory { get; set; } = [];
     public List<string> Steps { get; set; } = [];
 }

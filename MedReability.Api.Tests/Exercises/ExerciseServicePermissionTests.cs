@@ -103,6 +103,57 @@ public class ExerciseServicePermissionTests
     }
 
     [Fact]
+    public async Task GetExercises_FilterFields_Returns_Matching_Exercises()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        var ownExercise = await db.Exercises.SingleAsync(x => x.Id == data.OwnExerciseId);
+        ownExercise.ExerciseTypes = ["Растяжка"];
+        ownExercise.BodyParts = ["Шея"];
+        ownExercise.Inventory = ["Коврик"];
+
+        var globalExercise = await db.Exercises.SingleAsync(x => x.Id == data.GlobalExerciseId);
+        globalExercise.ExerciseTypes = ["Растяжка"];
+        globalExercise.BodyParts = ["Спина"];
+        globalExercise.Inventory = ["Коврик"];
+
+        await db.SaveChangesAsync();
+
+        var result = await service.GetExercisesAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            isAdmin: false,
+            new ListExercisesQueryDto
+            {
+                PageNumber = 1,
+                PageSize = 50,
+                All = true,
+                ExerciseTypes = ["Растяжка"],
+                BodyParts = ["Шея"],
+                Inventory = ["Коврик"]
+            });
+
+        var exercise = Assert.Single(result.Items);
+        Assert.Equal(data.OwnExerciseId, exercise.Id);
+    }
+
+    [Fact]
+    public async Task GetFilterOptions_Returns_Static_Values()
+    {
+        await using var db = CreateDbContext();
+        var service = CreateService(db);
+
+        var result = await service.GetFilterOptionsAsync();
+
+        Assert.Contains(ExerciseType.Repetition, result.TrackingTypes);
+        Assert.Contains("Растяжка", result.ExerciseTypes);
+        Assert.Contains("Шея", result.BodyParts);
+        Assert.Contains("Коврик", result.Inventory);
+    }
+
+    [Fact]
     public async Task Delete_Doctor_Can_Delete_Own_And_Global_But_Not_Other_Doctor()
     {
         await using var db = CreateDbContext();

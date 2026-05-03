@@ -9,4 +9,7 @@ public class ListExercisesQueryDto
     public bool All { get; set; }
     public string? Search { get; set; }
     public List<ExerciseType>? Types { get; set; }
+    public List<string>? ExerciseTypes { get; set; }
+    public List<string>? BodyParts { get; set; }
+    public List<string>? Inventory { get; set; }
 }

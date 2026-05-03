@@ -20,5 +20,11 @@ public class CreateExerciseRequestDto
     [Required]
     public ExerciseType Type { get; set; }
 
+    public List<string> ExerciseTypes { get; set; } = [];
+
+    public List<string> BodyParts { get; set; } = [];
+
+    public List<string> Inventory { get; set; } = [];
+
     public bool IsGlobal { get; set; }
 }

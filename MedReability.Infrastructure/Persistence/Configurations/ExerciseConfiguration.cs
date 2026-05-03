@@ -38,6 +38,21 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<ExerciseEntity>
             .HasColumnType("text[]")
             .IsRequired();
 
+        builder.Property(x => x.ExerciseTypes)
+            .HasColumnName("exercise_types")
+            .HasColumnType("text[]")
+            .IsRequired();
+
+        builder.Property(x => x.BodyParts)
+            .HasColumnName("body_parts")
+            .HasColumnType("text[]")
+            .IsRequired();
+
+        builder.Property(x => x.Inventory)
+            .HasColumnName("inventory")
+            .HasColumnType("text[]")
+            .IsRequired();
+
         builder.Property(x => x.UserId)
             .HasColumnName("user_id")
             .IsRequired(false);

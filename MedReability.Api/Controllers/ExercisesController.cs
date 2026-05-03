@@ -38,6 +38,16 @@ public class ExercisesController(IExerciseService exerciseService) : ControllerB
         return Ok(exercises);
     }
 
+    [HttpGet("filter-options")]
+    [ProducesResponseType(typeof(ExerciseFilterOptionsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetFilterOptions(CancellationToken cancellationToken = default)
+    {
+        var filterOptions = await exerciseService.GetFilterOptionsAsync(cancellationToken);
+        return Ok(filterOptions);
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ExerciseResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -86,6 +96,9 @@ public class ExercisesController(IExerciseService exerciseService) : ControllerB
             MediaFiles = request.MediaFiles,
             Steps = request.Steps,
             Type = request.Type,
+            ExerciseTypes = request.ExerciseTypes,
+            BodyParts = request.BodyParts,
+            Inventory = request.Inventory,
             IsGlobal = request.IsGlobal
         };
 
@@ -121,6 +134,9 @@ public class ExercisesController(IExerciseService exerciseService) : ControllerB
             Description = request.Description,
             Steps = request.Steps,
             Type = request.Type,
+            ExerciseTypes = request.ExerciseTypes,
+            BodyParts = request.BodyParts,
+            Inventory = request.Inventory,
             MediaFiles = request.MediaFiles
         };
 

@@ -18,6 +18,8 @@ public interface IExerciseService
         ListExercisesQueryDto query,
         CancellationToken cancellationToken = default);
 
+    Task<ExerciseFilterOptionsDto> GetFilterOptionsAsync(CancellationToken cancellationToken = default);
+
     Task<ExerciseResponseDto> GetExerciseByIdAsync(
         Guid clinicId,
         Guid userId,
