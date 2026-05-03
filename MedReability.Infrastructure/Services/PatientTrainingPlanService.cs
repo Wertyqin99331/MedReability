@@ -54,7 +54,8 @@ public class PatientTrainingPlanService(
                         Order = ex.Order,
                         ExerciseId = ex.ExerciseId,
                         Sets = ex.Sets,
-                        RestBetweenSets = ex.RestBetweenSets,
+                        RestBetweenSetsInSeconds = ex.RestBetweenSetsInSeconds,
+                        RestAfterInSeconds = ex.RestAfterInSeconds,
                         Repetitions = ex.Repetitions,
                         DurationSeconds = ex.DurationSeconds,
                         Comment = string.IsNullOrWhiteSpace(ex.Comment) ? null : ex.Comment.Trim()
@@ -130,7 +131,8 @@ public class PatientTrainingPlanService(
                         Order = ex.Order,
                         ExerciseId = ex.ExerciseId,
                         Sets = ex.Sets,
-                        RestBetweenSets = ex.RestBetweenSets,
+                        RestBetweenSetsInSeconds = ex.RestBetweenSetsInSeconds,
+                        RestAfterInSeconds = ex.RestAfterInSeconds,
                         Repetitions = ex.Repetitions,
                         DurationSeconds = ex.DurationSeconds,
                         Comment = string.IsNullOrWhiteSpace(ex.Comment) ? null : ex.Comment.Trim()
@@ -414,14 +416,19 @@ public class PatientTrainingPlanService(
                     throw new InvalidOperationException("Sets must be greater than 0 when provided.");
                 }
 
-                if (ex.RestBetweenSets is <= 0)
+                if (ex.RestBetweenSetsInSeconds is <= 0)
                 {
-                    throw new InvalidOperationException("RestBetweenSets must be greater than 0 when provided.");
+                    throw new InvalidOperationException("RestBetweenSetsInSeconds must be greater than 0 when provided.");
                 }
 
-                if (ex.RestBetweenSets.HasValue && (!ex.Sets.HasValue || ex.Sets.Value < 2))
+                if (ex.RestBetweenSetsInSeconds.HasValue && (!ex.Sets.HasValue || ex.Sets.Value < 2))
                 {
-                    throw new InvalidOperationException("RestBetweenSets can be set only when Sets is 2 or greater.");
+                    throw new InvalidOperationException("RestBetweenSetsInSeconds can be set only when Sets is 2 or greater.");
+                }
+
+                if (ex.RestAfterInSeconds is <= 0)
+                {
+                    throw new InvalidOperationException("RestAfterInSeconds must be greater than 0 when provided.");
                 }
             }
         }
@@ -549,7 +556,8 @@ public class PatientTrainingPlanService(
                                 Steps = ex.ExerciseEntity.Steps.ToList()
                             },
                             Sets = ex.Sets,
-                            RestBetweenSets = ex.RestBetweenSets,
+                            RestBetweenSetsInSeconds = ex.RestBetweenSetsInSeconds,
+                            RestAfterInSeconds = ex.RestAfterInSeconds,
                             Repetitions = ex.Repetitions,
                             DurationSeconds = ex.DurationSeconds,
                             Comment = ex.Comment

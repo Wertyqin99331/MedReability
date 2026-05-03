@@ -3,6 +3,7 @@ using System;
 using MedReability.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MedReability.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503191828_AddRestAfterInSecondsToPatientTrainingPlanDayExercise")]
+    partial class AddRestAfterInSecondsToPatientTrainingPlanDayExercise
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,9 +213,9 @@ namespace MedReability.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rest_after_in_seconds");
 
-                    b.Property<int?>("RestBetweenSetsInSeconds")
+                    b.Property<int?>("RestBetweenSets")
                         .HasColumnType("integer")
-                        .HasColumnName("rest_between_sets_in_seconds");
+                        .HasColumnName("rest_between_sets");
 
                     b.Property<int?>("Sets")
                         .HasColumnType("integer")
@@ -231,7 +234,7 @@ namespace MedReability.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_patient_training_plan_day_exercises_rest_after", "rest_after_in_seconds IS NULL OR rest_after_in_seconds > 0");
 
-                            t.HasCheckConstraint("CK_patient_training_plan_day_exercises_sets_and_rest", "(sets IS NULL OR sets > 0) AND (rest_between_sets_in_seconds IS NULL OR rest_between_sets_in_seconds > 0) AND (rest_between_sets_in_seconds IS NULL OR (sets IS NOT NULL AND sets >= 2))");
+                            t.HasCheckConstraint("CK_patient_training_plan_day_exercises_sets_and_rest", "(sets IS NULL OR sets > 0) AND (rest_between_sets IS NULL OR rest_between_sets > 0) AND (rest_between_sets IS NULL OR (sets IS NOT NULL AND sets >= 2))");
                         });
                 });
 

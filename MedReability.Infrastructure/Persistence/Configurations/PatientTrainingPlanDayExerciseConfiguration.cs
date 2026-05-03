@@ -34,8 +34,12 @@ public class PatientTrainingPlanDayExerciseConfiguration : IEntityTypeConfigurat
             .HasColumnName("sets")
             .IsRequired(false);
 
-        builder.Property(x => x.RestBetweenSets)
-            .HasColumnName("rest_between_sets")
+        builder.Property(x => x.RestBetweenSetsInSeconds)
+            .HasColumnName("rest_between_sets_in_seconds")
+            .IsRequired(false);
+
+        builder.Property(x => x.RestAfterInSeconds)
+            .HasColumnName("rest_after_in_seconds")
             .IsRequired(false);
 
         builder.Property(x => x.DurationSeconds)
@@ -59,8 +63,12 @@ public class PatientTrainingPlanDayExerciseConfiguration : IEntityTypeConfigurat
         builder.ToTable(x => x.HasCheckConstraint(
             "CK_patient_training_plan_day_exercises_sets_and_rest",
             "(sets IS NULL OR sets > 0) AND " +
-            "(rest_between_sets IS NULL OR rest_between_sets > 0) AND " +
-            "(rest_between_sets IS NULL OR (sets IS NOT NULL AND sets >= 2))"));
+            "(rest_between_sets_in_seconds IS NULL OR rest_between_sets_in_seconds > 0) AND " +
+            "(rest_between_sets_in_seconds IS NULL OR (sets IS NOT NULL AND sets >= 2))"));
+
+        builder.ToTable(x => x.HasCheckConstraint(
+            "CK_patient_training_plan_day_exercises_rest_after",
+            "rest_after_in_seconds IS NULL OR rest_after_in_seconds > 0"));
 
         builder.HasOne(x => x.PatientTrainingPlanDayEntity)
             .WithMany(x => x.Exercises)

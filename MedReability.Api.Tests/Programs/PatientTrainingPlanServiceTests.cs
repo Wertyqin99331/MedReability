@@ -70,7 +70,7 @@ public class PatientTrainingPlanServiceTests
     }
 
     [Fact]
-    public async Task Create_WithRestBetweenSetsAndSetsLessThanTwo_ThrowsInvalidOperation()
+    public async Task Create_WithRestBetweenSetsInSecondsAndSetsLessThanTwo_ThrowsInvalidOperation()
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
@@ -78,14 +78,14 @@ public class PatientTrainingPlanServiceTests
 
         var request = BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId);
         request.Days[0].Exercises[0].Sets = 1;
-        request.Days[0].Exercises[0].RestBetweenSets = 30;
+        request.Days[0].Exercises[0].RestBetweenSetsInSeconds = 30;
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.CreateAsync(data.ClinicAId, data.AdminAId, isAdmin: true, request));
     }
 
     [Fact]
-    public async Task Create_WithSetsAndRestBetweenSets_PersistsFields()
+    public async Task Create_WithSetsAndRestBetweenSetsInSeconds_PersistsFields()
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
@@ -102,7 +102,7 @@ public class PatientTrainingPlanServiceTests
 
         var request = BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId);
         request.Days[0].Exercises[0].Sets = 2;
-        request.Days[0].Exercises[0].RestBetweenSets = 30;
+        request.Days[0].Exercises[0].RestBetweenSetsInSeconds = 30;
 
         var result = await service.CreateAsync(data.ClinicAId, data.DoctorAId, isAdmin: false, request);
 
@@ -112,7 +112,50 @@ public class PatientTrainingPlanServiceTests
             .Single(x => x.Order == 1);
 
         Assert.Equal(2, exercise.Sets);
-        Assert.Equal(30, exercise.RestBetweenSets);
+        Assert.Equal(30, exercise.RestBetweenSetsInSeconds);
+    }
+
+    [Fact]
+    public async Task Create_WithRestAfterInSeconds_PersistsField()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
+        {
+            Id = Guid.NewGuid(),
+            ClinicId = data.ClinicAId,
+            DoctorId = data.DoctorAId,
+            PatientId = data.PatientAId
+        });
+        await db.SaveChangesAsync();
+
+        var request = BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId);
+        request.Days[0].Exercises[0].RestAfterInSeconds = 45;
+
+        var result = await service.CreateAsync(data.ClinicAId, data.DoctorAId, isAdmin: false, request);
+
+        var exercise = result.Days
+            .Single(x => x.DayNumber == 1)
+            .Exercises
+            .Single(x => x.Order == 1);
+
+        Assert.Equal(45, exercise.RestAfterInSeconds);
+    }
+
+    [Fact]
+    public async Task Create_WithInvalidRestAfterInSeconds_ThrowsInvalidOperation()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        var request = BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId);
+        request.Days[0].Exercises[0].RestAfterInSeconds = 0;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateAsync(data.ClinicAId, data.AdminAId, isAdmin: true, request));
     }
 
     [Fact]

@@ -262,7 +262,8 @@ public class DoctorPatientAssignmentService(
                         Steps = x.ExerciseEntity.Steps.ToList()
                     },
                     Sets = x.Sets,
-                    RestBetweenSets = x.RestBetweenSets,
+                    RestBetweenSetsInSeconds = x.RestBetweenSetsInSeconds,
+                    RestAfterInSeconds = x.RestAfterInSeconds,
                     Repetitions = x.Repetitions,
                     DurationSeconds = x.DurationSeconds,
                     Comment = x.Comment
