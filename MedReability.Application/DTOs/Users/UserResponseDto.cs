@@ -14,4 +14,5 @@ public class UserResponseDto
     public string? ImageUrl { get; set; }
     public UserRole Role { get; set; }
     public bool IsActive { get; set; }
+    public bool HasActivePlan { get; set; }
 }

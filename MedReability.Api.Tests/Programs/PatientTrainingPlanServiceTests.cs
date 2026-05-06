@@ -145,6 +145,43 @@ public class PatientTrainingPlanServiceTests
     }
 
     [Fact]
+    public async Task GetById_OwnerDoctor_ReturnsFullPlanWithDaysAndExercises()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
+        {
+            Id = Guid.NewGuid(),
+            ClinicId = data.ClinicAId,
+            DoctorId = data.DoctorAId,
+            PatientId = data.PatientAId
+        });
+        await db.SaveChangesAsync();
+
+        var created = await service.CreateAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            isAdmin: false,
+            BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId));
+
+        db.ChangeTracker.Clear();
+
+        var result = await service.GetByIdAsync(data.ClinicAId, data.DoctorAId, isAdmin: false, created.Id);
+
+        Assert.Equal(created.Id, result.Id);
+        Assert.Equal(2, result.Days.Count);
+        var trainingDay = result.Days.Single(x => x.DayNumber == 1);
+        Assert.False(trainingDay.IsRestDay);
+        Assert.Equal(2, trainingDay.Exercises.Count);
+        Assert.Equal(data.OwnExerciseId, trainingDay.Exercises[0].ExerciseId);
+        Assert.Equal("Own repetition", trainingDay.Exercises[0].ExerciseEntity.Name);
+        Assert.Equal(data.GlobalExerciseId, trainingDay.Exercises[1].ExerciseId);
+        Assert.Equal("Global time", trainingDay.Exercises[1].ExerciseEntity.Name);
+    }
+
+    [Fact]
     public async Task Create_WithInvalidRestAfterInSeconds_ThrowsInvalidOperation()
     {
         await using var db = CreateDbContext();
@@ -230,6 +267,104 @@ public class PatientTrainingPlanServiceTests
 
         Assert.Equal("Admin updated", updated.Name);
         Assert.Equal(created.Id, updated.Id);
+    }
+
+    [Fact]
+    public async Task Delete_OwnerDoctor_SoftDeletesPlan()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
+        {
+            Id = Guid.NewGuid(),
+            ClinicId = data.ClinicAId,
+            DoctorId = data.DoctorAId,
+            PatientId = data.PatientAId
+        });
+        await db.SaveChangesAsync();
+
+        var created = await service.CreateAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            isAdmin: false,
+            BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId));
+
+        db.ChangeTracker.Clear();
+
+        var deleted = await service.DeleteAsync(data.ClinicAId, data.DoctorAId, isAdmin: false, created.Id);
+
+        var plan = await db.PatientTrainingPlans.SingleAsync(x => x.Id == created.Id);
+        Assert.True(deleted);
+        Assert.True(plan.IsDeleted);
+    }
+
+    [Fact]
+    public async Task Delete_NonOwnerDoctor_ThrowsUnauthorized()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        db.DoctorPatientAssignments.AddRange(
+            new DoctorPatientAssignmentEntity
+            {
+                Id = Guid.NewGuid(),
+                ClinicId = data.ClinicAId,
+                DoctorId = data.DoctorAId,
+                PatientId = data.PatientAId
+            },
+            new DoctorPatientAssignmentEntity
+            {
+                Id = Guid.NewGuid(),
+                ClinicId = data.ClinicAId,
+                DoctorId = data.DoctorA2Id,
+                PatientId = data.PatientAId
+            });
+        await db.SaveChangesAsync();
+
+        var created = await service.CreateAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            isAdmin: false,
+            BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId));
+
+        db.ChangeTracker.Clear();
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.DeleteAsync(data.ClinicAId, data.DoctorA2Id, isAdmin: false, created.Id));
+    }
+
+    [Fact]
+    public async Task Delete_Admin_CanSoftDeleteForeignPlan()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        db.DoctorPatientAssignments.Add(new DoctorPatientAssignmentEntity
+        {
+            Id = Guid.NewGuid(),
+            ClinicId = data.ClinicAId,
+            DoctorId = data.DoctorAId,
+            PatientId = data.PatientAId
+        });
+        await db.SaveChangesAsync();
+
+        var created = await service.CreateAsync(
+            data.ClinicAId,
+            data.DoctorAId,
+            isAdmin: false,
+            BuildValidPlanRequest(data.PatientAId, data.OwnExerciseId, data.GlobalExerciseId));
+
+        db.ChangeTracker.Clear();
+
+        var deleted = await service.DeleteAsync(data.ClinicAId, data.AdminAId, isAdmin: true, created.Id);
+
+        var plan = await db.PatientTrainingPlans.SingleAsync(x => x.Id == created.Id);
+        Assert.True(deleted);
+        Assert.True(plan.IsDeleted);
     }
 
     private static AppDbContext CreateDbContext()

@@ -83,6 +83,7 @@ public class DoctorPatientAssignmentService(
                     LastName = patient.LastName,
                     Email = patient.Email,
                     PhoneNumber = patient.PhoneNumber,
+                    ImageUrl = patient.ImageUrl,
                     IsActive = patient.IsActive,
                     HasPlan = dbContext.PatientTrainingPlans.Any(plan =>
                         plan.ClinicId == clinicId &&

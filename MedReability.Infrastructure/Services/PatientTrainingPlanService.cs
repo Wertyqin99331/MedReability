@@ -78,22 +78,15 @@ public class PatientTrainingPlanService(
         UpdatePatientTrainingPlanRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        var plan = await dbContext.PatientTrainingPlans
-            .Include(x => x.Days)
-            .ThenInclude(x => x.Exercises)
-            .FirstOrDefaultAsync(x => x.Id == planId && x.ClinicId == clinicId && !x.IsDeleted, cancellationToken);
+        var plan = await GetEditablePlanAsync(
+            clinicId,
+            currentUserId,
+            isAdmin,
+            planId,
+            "edit",
+            tracking: true,
+            cancellationToken);
 
-        if (plan is null)
-        {
-            throw new KeyNotFoundException("Training plan was not found.");
-        }
-
-        if (!accessPolicyService.IsAdminOrOwner(isAdmin, currentUserId, plan.CreatedByUserId))
-        {
-            throw new UnauthorizedAccessException("You are not allowed to edit this training plan.");
-        }
-
-        await ValidateDoctorAssignmentIfRequiredAsync(clinicId, currentUserId, plan.PatientId, isAdmin, cancellationToken);
         await ValidateDaysAsync(clinicId, currentUserId, isAdmin, request.Days, cancellationToken);
 
         plan.Name = request.Name.Trim();
@@ -145,6 +138,46 @@ public class PatientTrainingPlanService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return await GetMappedPlanAsync(plan.Id, clinicId, cancellationToken);
+    }
+
+    public async Task<PatientTrainingPlanResponseDto> GetByIdAsync(
+        Guid clinicId,
+        Guid currentUserId,
+        bool isAdmin,
+        Guid planId,
+        CancellationToken cancellationToken = default)
+    {
+        var plan = await GetEditablePlanAsync(
+            clinicId,
+            currentUserId,
+            isAdmin,
+            planId,
+            "view",
+            tracking: false,
+            cancellationToken);
+
+        return await GetMappedPlanAsync(plan.Id, clinicId, cancellationToken);
+    }
+
+    public async Task<bool> DeleteAsync(
+        Guid clinicId,
+        Guid currentUserId,
+        bool isAdmin,
+        Guid planId,
+        CancellationToken cancellationToken = default)
+    {
+        var plan = await GetEditablePlanAsync(
+            clinicId,
+            currentUserId,
+            isAdmin,
+            planId,
+            "delete",
+            tracking: true,
+            cancellationToken);
+
+        plan.IsDeleted = true;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<PatientTrainingPlanDayProgressResponseDto> CompleteDayAsync(
@@ -200,6 +233,40 @@ public class PatientTrainingPlanService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return MapDayProgress(progress);
+    }
+
+    private async Task<PatientTrainingPlanEntity> GetEditablePlanAsync(
+        Guid clinicId,
+        Guid currentUserId,
+        bool isAdmin,
+        Guid planId,
+        string action,
+        bool tracking,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.PatientTrainingPlans
+            .Where(x => x.Id == planId && x.ClinicId == clinicId && !x.IsDeleted);
+
+        if (!tracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        var plan = await query.FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            throw new KeyNotFoundException("Training plan was not found.");
+        }
+
+        if (!accessPolicyService.IsAdminOrOwner(isAdmin, currentUserId, plan.CreatedByUserId))
+        {
+            throw new UnauthorizedAccessException($"You are not allowed to {action} this training plan.");
+        }
+
+        await ValidateDoctorAssignmentIfRequiredAsync(clinicId, currentUserId, plan.PatientId, isAdmin, cancellationToken);
+
+        return plan;
     }
 
     public async Task<PatientTrainingPlanDayProgressResponseDto> UpdateDayProgressAsync(

@@ -19,6 +19,20 @@ public interface IPatientTrainingPlanService
         UpdatePatientTrainingPlanRequestDto request,
         CancellationToken cancellationToken = default);
 
+    Task<PatientTrainingPlanResponseDto> GetByIdAsync(
+        Guid clinicId,
+        Guid currentUserId,
+        bool isAdmin,
+        Guid planId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteAsync(
+        Guid clinicId,
+        Guid currentUserId,
+        bool isAdmin,
+        Guid planId,
+        CancellationToken cancellationToken = default);
+
     Task<PatientTrainingPlanDayProgressResponseDto> CompleteDayAsync(
         Guid clinicId,
         Guid patientId,

@@ -3,6 +3,7 @@ using MedReability.Application.DTOs.Users;
 using MedReability.Application.Interfaces.Services;
 using MedReability.Application.Interfaces.Storage;
 using MedReability.Domain.Entities;
+using MedReability.Domain.Enums;
 using MedReability.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -97,7 +98,12 @@ public class UserService(
                 PhoneNumber = x.PhoneNumber,
                 ImageUrl = x.ImageUrl,
                 Role = x.Role,
-                IsActive = x.IsActive
+                IsActive = x.IsActive,
+                HasActivePlan = x.Role == UserRole.Patient && dbContext.PatientTrainingPlans.Any(plan =>
+                    plan.ClinicId == clinicId &&
+                    plan.PatientId == x.Id &&
+                    !plan.IsDeleted &&
+                    plan.Status != PatientTrainingPlanStatus.Completed)
             })
             .ToListAsync(cancellationToken);
 
@@ -152,7 +158,7 @@ public class UserService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Map(user);
+        return Map(user, await HasActivePlanAsync(clinicId, user.Id, user.Role, cancellationToken));
     }
 
     public async Task SetUserPasswordAsync(
@@ -190,6 +196,15 @@ public class UserService(
             return true;
         }
 
+        if (user.Role == UserRole.Patient)
+        {
+            if (await HasActivePlanAsync(clinicId, user.Id, user.Role, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "Patient has an active training plan. Delete or complete the active plan before deactivating the patient.");
+            }
+        }
+
         user.IsActive = false;
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
@@ -216,7 +231,28 @@ public class UserService(
         return true;
     }
 
-    private static UserResponseDto Map(UserEntity user)
+    private async Task<bool> HasActivePlanAsync(
+        Guid clinicId,
+        Guid userId,
+        MedReability.Domain.Enums.UserRole role,
+        CancellationToken cancellationToken)
+    {
+        if (role != UserRole.Patient)
+        {
+            return false;
+        }
+
+        return await dbContext.PatientTrainingPlans
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.ClinicId == clinicId &&
+                     x.PatientId == userId &&
+                     !x.IsDeleted &&
+                     x.Status != PatientTrainingPlanStatus.Completed,
+                cancellationToken);
+    }
+
+    private static UserResponseDto Map(UserEntity user, bool hasActivePlan = false)
     {
         return new UserResponseDto
         {
@@ -229,7 +265,8 @@ public class UserService(
             PhoneNumber = user.PhoneNumber,
             ImageUrl = user.ImageUrl,
             Role = user.Role,
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            HasActivePlan = hasActivePlan
         };
     }
 }

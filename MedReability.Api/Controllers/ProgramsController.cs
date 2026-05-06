@@ -12,6 +12,33 @@ namespace MedReability.Api.Controllers;
 [Route("api/programs")]
 public class ProgramsController(IPatientTrainingPlanService trainingPlanService) : ControllerBase
 {
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(PatientTrainingPlanResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+
+        if (clinicId is null || userId is null)
+        {
+            return Forbid();
+        }
+
+        var result = await trainingPlanService.GetByIdAsync(
+            clinicId.Value,
+            userId.Value,
+            User.IsInRole(nameof(UserRole.Admin)),
+            id,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(PatientTrainingPlanResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -37,7 +64,7 @@ public class ProgramsController(IPatientTrainingPlanService trainingPlanService)
             request,
             cancellationToken);
 
-        return CreatedAtAction(nameof(Create), new { id = result.Id }, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
@@ -68,5 +95,32 @@ public class ProgramsController(IPatientTrainingPlanService trainingPlanService)
             cancellationToken);
 
         return Ok(result);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+
+        if (clinicId is null || userId is null)
+        {
+            return Forbid();
+        }
+
+        await trainingPlanService.DeleteAsync(
+            clinicId.Value,
+            userId.Value,
+            User.IsInRole(nameof(UserRole.Admin)),
+            id,
+            cancellationToken);
+
+        return NoContent();
     }
 }
