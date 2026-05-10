@@ -1,5 +1,6 @@
 using MedReability.Api.Auth;
 using MedReability.Api.Common;
+using MedReability.Application.DTOs.Assignments;
 using MedReability.Application.DTOs.TrainingPlans;
 using MedReability.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,8 +10,36 @@ namespace MedReability.Api.Controllers;
 [ApiController]
 [PatientOnly]
 [Route("api/patient/program-progress")]
-public class PatientProgramProgressController(IPatientTrainingPlanService trainingPlanService) : ControllerBase
+public class PatientProgramProgressController(
+    IPatientTrainingPlanService trainingPlanService,
+    IDoctorPatientAssignmentService assignmentService) : ControllerBase
 {
+    [HttpGet("me/overview")]
+    [ProducesResponseType(typeof(PatientPlanOverviewResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyOverview(
+        [FromQuery] DateOnly? startDate,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+
+        if (clinicId is null || userId is null)
+        {
+            return Forbid();
+        }
+
+        var overview = await assignmentService.GetPatientPlanOverviewAsync(
+            clinicId.Value,
+            userId.Value,
+            startDate,
+            cancellationToken);
+
+        return Ok(overview);
+    }
+
     [HttpPost("{planId:guid}/days/{dayNumber:int}/complete")]
     [ProducesResponseType(typeof(PatientTrainingPlanDayProgressResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

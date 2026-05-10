@@ -129,33 +129,43 @@ public class DoctorPatientAssignmentService(
             throw new KeyNotFoundException("Patient was not found in your assignment list.");
         }
 
-        var patient = await dbContext.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == patientId && x.ClinicId == clinicId, cancellationToken);
+        var patient = await GetPatientInClinicAsync(clinicId, patientId, cancellationToken);
 
-        if (patient is null)
-        {
-            throw new KeyNotFoundException("Patient was not found in your clinic.");
-        }
+        return await BuildPatientPlanOverviewAsync(
+            clinicId,
+            patientId,
+            startDate,
+            () => new DoctorPatientOverviewResponseDto
+            {
+                Patient = MapOverviewPatient(patient)
+            },
+            cancellationToken);
+    }
 
-        if (patient.Role != UserRole.Patient)
-        {
-            throw new InvalidOperationException("Selected user must have Patient role.");
-        }
+    public async Task<PatientPlanOverviewResponseDto> GetPatientPlanOverviewAsync(
+        Guid clinicId,
+        Guid patientId,
+        DateOnly? startDate,
+        CancellationToken cancellationToken = default)
+    {
+        await GetPatientInClinicAsync(clinicId, patientId, cancellationToken);
 
-        var patientDto = new DoctorPatientOverviewPatientDto
-        {
-            Id = patient.Id,
-            ClinicId = patient.ClinicId,
-            FirstName = patient.FirstName,
-            Patronymic = patient.Patronymic,
-            LastName = patient.LastName,
-            Email = patient.Email,
-            PhoneNumber = patient.PhoneNumber,
-            ImageUrl = patient.ImageUrl,
-            IsActive = patient.IsActive
-        };
+        return await BuildPatientPlanOverviewAsync(
+            clinicId,
+            patientId,
+            startDate,
+            () => new PatientPlanOverviewResponseDto(),
+            cancellationToken);
+    }
 
+    private async Task<TResponse> BuildPatientPlanOverviewAsync<TResponse>(
+        Guid clinicId,
+        Guid patientId,
+        DateOnly? startDate,
+        Func<TResponse> createResponse,
+        CancellationToken cancellationToken)
+        where TResponse : PatientPlanOverviewResponseDto
+    {
         var weekStart = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
         var latestPlan = await dbContext.PatientTrainingPlans
@@ -167,15 +177,13 @@ public class DoctorPatientAssignmentService(
 
         if (latestPlan is null)
         {
-            return new DoctorPatientOverviewResponseDto
-            {
-                Patient = patientDto,
-                HasPlan = false,
-                Plan = null,
-                Progress = null,
-                Days = [],
-                TodayWorkout = null
-            };
+            var response = createResponse();
+            response.HasPlan = false;
+            response.Plan = null;
+            response.Progress = null;
+            response.Days = [];
+            response.TodayWorkout = null;
+            return response;
         }
 
         var plan = await dbContext.PatientTrainingPlans
@@ -281,26 +289,24 @@ public class DoctorPatientAssignmentService(
             };
         }
 
-        return new DoctorPatientOverviewResponseDto
+        var result = createResponse();
+        result.HasPlan = true;
+        result.Plan = new DoctorPatientOverviewPlanDto
         {
-            Patient = patientDto,
-            HasPlan = true,
-            Plan = new DoctorPatientOverviewPlanDto
-            {
-                Id = plan.Id,
-                Name = plan.Name,
-                Status = plan.Status,
-                StartDate = plan.StartDate
-            },
-            Progress = new DoctorPatientOverviewProgressDto
-            {
-                CompletedDaysCount = completedDaysCount,
-                PlannedTrainingDaysCount = plannedTrainingDaysCount,
-                CompletionPercent = completionPercent
-            },
-            Days = days,
-            TodayWorkout = todayWorkout
+            Id = plan.Id,
+            Name = plan.Name,
+            Status = plan.Status,
+            StartDate = plan.StartDate
         };
+        result.Progress = new DoctorPatientOverviewProgressDto
+        {
+            CompletedDaysCount = completedDaysCount,
+            PlannedTrainingDaysCount = plannedTrainingDaysCount,
+            CompletionPercent = completionPercent
+        };
+        result.Days = days;
+        result.TodayWorkout = todayWorkout;
+        return result;
     }
 
     public async Task<PagedResultDto<DoctorPatientAssignmentListItemDto>> GetAssignmentsAsync(
@@ -470,6 +476,44 @@ public class DoctorPatientAssignmentService(
             ClinicId = assignment.ClinicId,
             DoctorId = assignment.DoctorId,
             PatientId = assignment.PatientId
+        };
+    }
+
+    private async Task<UserEntity> GetPatientInClinicAsync(
+        Guid clinicId,
+        Guid patientId,
+        CancellationToken cancellationToken)
+    {
+        var patient = await dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == patientId && x.ClinicId == clinicId, cancellationToken);
+
+        if (patient is null)
+        {
+            throw new KeyNotFoundException("Patient was not found in your clinic.");
+        }
+
+        if (patient.Role != UserRole.Patient)
+        {
+            throw new InvalidOperationException("Selected user must have Patient role.");
+        }
+
+        return patient;
+    }
+
+    private static DoctorPatientOverviewPatientDto MapOverviewPatient(UserEntity patient)
+    {
+        return new DoctorPatientOverviewPatientDto
+        {
+            Id = patient.Id,
+            ClinicId = patient.ClinicId,
+            FirstName = patient.FirstName,
+            Patronymic = patient.Patronymic,
+            LastName = patient.LastName,
+            Email = patient.Email,
+            PhoneNumber = patient.PhoneNumber,
+            ImageUrl = patient.ImageUrl,
+            IsActive = patient.IsActive
         };
     }
 
