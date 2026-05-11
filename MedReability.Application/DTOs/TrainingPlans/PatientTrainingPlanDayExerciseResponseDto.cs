@@ -5,6 +5,7 @@ namespace MedReability.Application.DTOs.TrainingPlans;
 public class PatientTrainingPlanDayExerciseResponseDto
 {
     public Guid Id { get; set; }
+    public Guid DayExerciseId { get; set; }
     public int Order { get; set; }
     public Guid ExerciseId { get; set; }
     public ExerciseResponseDto ExerciseEntity { get; set; } = null!;

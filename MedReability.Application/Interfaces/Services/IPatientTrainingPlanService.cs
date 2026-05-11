@@ -47,4 +47,12 @@ public interface IPatientTrainingPlanService
         int dayNumber,
         UpdatePatientTrainingPlanDayProgressRequestDto request,
         CancellationToken cancellationToken = default);
+
+    Task<PatientTrainingPlanDayExerciseProgressResponseDto> CompleteDayExerciseAsync(
+        Guid clinicId,
+        Guid patientId,
+        Guid planId,
+        int dayNumber,
+        Guid dayExerciseId,
+        CancellationToken cancellationToken = default);
 }

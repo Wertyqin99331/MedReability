@@ -261,11 +261,22 @@ public class DoctorPatientAssignmentService(
             daysByNumber.TryGetValue(todayDayNumber, out var todayPlanDay) &&
             !todayPlanDay.IsRestDay)
         {
+            var completedDayExerciseIds = await dbContext.PatientTrainingPlanDayExerciseProgresses
+                .AsNoTracking()
+                .Where(x =>
+                    x.PatientId == patientId &&
+                    x.PatientTrainingPlanId == plan.Id &&
+                    x.DayNumber == todayDayNumber)
+                .Select(x => x.PatientTrainingPlanDayExerciseId)
+                .ToHashSetAsync(cancellationToken);
+
             var todayExercises = todayPlanDay.Exercises
                 .OrderBy(x => x.Order)
                 .Select(x => new DoctorPatientTodayWorkoutExerciseDto
                 {
+                    DayExerciseId = x.Id,
                     Order = x.Order,
+                    IsCompleted = completedDayExerciseIds.Contains(x.Id),
                     ExerciseEntity = new ExerciseResponseDto
                     {
                         Id = x.ExerciseEntity.Id,

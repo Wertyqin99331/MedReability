@@ -359,6 +359,65 @@ public class PatientTrainingPlanService(
         return MapDayProgress(progress);
     }
 
+    public async Task<PatientTrainingPlanDayExerciseProgressResponseDto> CompleteDayExerciseAsync(
+        Guid clinicId,
+        Guid patientId,
+        Guid planId,
+        int dayNumber,
+        Guid dayExerciseId,
+        CancellationToken cancellationToken = default)
+    {
+        if (dayNumber <= 0)
+        {
+            throw new InvalidOperationException("DayNumber must be greater than 0.");
+        }
+
+        var dayExerciseExists = await dbContext.PatientTrainingPlanDays
+            .AsNoTracking()
+            .Where(day =>
+                day.PatientTrainingPlanId == planId &&
+                day.DayNumber == dayNumber &&
+                day.PatientTrainingPlanEntity.ClinicId == clinicId &&
+                day.PatientTrainingPlanEntity.PatientId == patientId &&
+                !day.PatientTrainingPlanEntity.IsDeleted)
+            .SelectMany(day => day.Exercises)
+            .AnyAsync(ex => ex.Id == dayExerciseId, cancellationToken);
+
+        if (!dayExerciseExists)
+        {
+            throw new KeyNotFoundException("Training day exercise was not found.");
+        }
+
+        var existingProgress = await dbContext.PatientTrainingPlanDayExerciseProgresses
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.PatientId == patientId &&
+                     x.PatientTrainingPlanId == planId &&
+                     x.DayNumber == dayNumber &&
+                     x.PatientTrainingPlanDayExerciseId == dayExerciseId,
+                cancellationToken);
+
+        if (existingProgress is not null)
+        {
+            return MapDayExerciseProgress(existingProgress);
+        }
+
+        var progress = new PatientTrainingPlanDayExerciseProgressEntity
+        {
+            Id = Guid.NewGuid(),
+            PatientId = patientId,
+            PatientTrainingPlanId = planId,
+            DayNumber = dayNumber,
+            PatientTrainingPlanDayExerciseId = dayExerciseId,
+            CompletedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.PatientTrainingPlanDayExerciseProgresses.Add(progress);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapDayExerciseProgress(progress);
+    }
+
     private async Task UpdatePlanStatusByCompletedDayAsync(
         PatientTrainingPlanEntity plan,
         int completedDayNumber,
@@ -646,6 +705,7 @@ public class PatientTrainingPlanService(
                         .Select(ex => new PatientTrainingPlanDayExerciseResponseDto
                         {
                             Id = ex.Id,
+                            DayExerciseId = ex.Id,
                             Order = ex.Order,
                             ExerciseId = ex.ExerciseId,
                             ExerciseEntity = new ExerciseResponseDto
@@ -688,6 +748,20 @@ public class PatientTrainingPlanService(
             WorkoutDifficultyRating = progress.WorkoutDifficultyRating,
             HadPain = progress.HadPain,
             PainIntensityRating = progress.PainIntensityRating,
+            CompletedAtUtc = progress.CompletedAtUtc
+        };
+    }
+
+    private static PatientTrainingPlanDayExerciseProgressResponseDto MapDayExerciseProgress(
+        PatientTrainingPlanDayExerciseProgressEntity progress)
+    {
+        return new PatientTrainingPlanDayExerciseProgressResponseDto
+        {
+            Id = progress.Id,
+            PatientId = progress.PatientId,
+            PatientTrainingPlanId = progress.PatientTrainingPlanId,
+            DayNumber = progress.DayNumber,
+            DayExerciseId = progress.PatientTrainingPlanDayExerciseId,
             CompletedAtUtc = progress.CompletedAtUtc
         };
     }

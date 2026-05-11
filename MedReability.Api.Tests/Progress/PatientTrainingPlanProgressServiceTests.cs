@@ -158,6 +158,63 @@ public class PatientTrainingPlanProgressServiceTests
                 }));
     }
 
+    [Fact]
+    public async Task CompleteDayExercise_CreatesExerciseProgress()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+        var dayExerciseId = await GetDayExerciseIdAsync(db, data.PlanId, dayNumber: 1);
+
+        var result = await service.CompleteDayExerciseAsync(
+            data.ClinicAId,
+            data.PatientAId,
+            data.PlanId,
+            dayNumber: 1,
+            dayExerciseId);
+
+        Assert.Equal(data.PatientAId, result.PatientId);
+        Assert.Equal(data.PlanId, result.PatientTrainingPlanId);
+        Assert.Equal(1, result.DayNumber);
+        Assert.Equal(dayExerciseId, result.DayExerciseId);
+    }
+
+    [Fact]
+    public async Task CompleteDayExercise_RepeatedCall_DoesNotCreateDuplicateProgress()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+        var dayExerciseId = await GetDayExerciseIdAsync(db, data.PlanId, dayNumber: 1);
+
+        await service.CompleteDayExerciseAsync(data.ClinicAId, data.PatientAId, data.PlanId, 1, dayExerciseId);
+        await service.CompleteDayExerciseAsync(data.ClinicAId, data.PatientAId, data.PlanId, 1, dayExerciseId);
+
+        var count = await db.PatientTrainingPlanDayExerciseProgresses.CountAsync(x =>
+            x.PatientTrainingPlanId == data.PlanId &&
+            x.DayNumber == 1 &&
+            x.PatientTrainingPlanDayExerciseId == dayExerciseId);
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public async Task CompleteDayExercise_WithExerciseFromAnotherDay_ThrowsNotFound()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+        var dayTwoExerciseId = await GetDayExerciseIdAsync(db, data.PlanId, dayNumber: 2);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            service.CompleteDayExerciseAsync(
+                data.ClinicAId,
+                data.PatientAId,
+                data.PlanId,
+                dayNumber: 1,
+                dayTwoExerciseId));
+    }
+
     private static AppDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -254,6 +311,15 @@ public class PatientTrainingPlanProgressServiceTests
             Role = role,
             IsActive = true
         };
+    }
+
+    private static async Task<Guid> GetDayExerciseIdAsync(AppDbContext db, Guid planId, int dayNumber)
+    {
+        return await db.PatientTrainingPlanDays
+            .Where(x => x.PatientTrainingPlanId == planId && x.DayNumber == dayNumber)
+            .SelectMany(x => x.Exercises)
+            .Select(x => x.Id)
+            .SingleAsync();
     }
 
     private static ExerciseEntity CreateExercise(Guid clinicId, Guid? userId, ExerciseType type, string name)

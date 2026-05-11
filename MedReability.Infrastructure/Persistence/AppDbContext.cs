@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PatientTrainingPlanDayEntity> PatientTrainingPlanDays => Set<PatientTrainingPlanDayEntity>();
     public DbSet<PatientTrainingPlanDayExerciseEntity> PatientTrainingPlanDayExercises => Set<PatientTrainingPlanDayExerciseEntity>();
     public DbSet<PatientTrainingPlanDayProgressEntity> PatientTrainingPlanDayProgresses => Set<PatientTrainingPlanDayProgressEntity>();
+    public DbSet<PatientTrainingPlanDayExerciseProgressEntity> PatientTrainingPlanDayExerciseProgresses => Set<PatientTrainingPlanDayExerciseProgressEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

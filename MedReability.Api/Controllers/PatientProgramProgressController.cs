@@ -71,6 +71,37 @@ public class PatientProgramProgressController(
         return Ok(result);
     }
 
+    [HttpPost("{planId:guid}/days/{dayNumber:int}/exercises/{dayExerciseId:guid}/complete")]
+    [ProducesResponseType(typeof(PatientTrainingPlanDayExerciseProgressResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompleteDayExercise(
+        Guid planId,
+        int dayNumber,
+        Guid dayExerciseId,
+        CancellationToken cancellationToken)
+    {
+        var clinicId = User.GetClinicId();
+        var userId = User.GetUserId();
+
+        if (clinicId is null || userId is null)
+        {
+            return Forbid();
+        }
+
+        var result = await trainingPlanService.CompleteDayExerciseAsync(
+            clinicId.Value,
+            userId.Value,
+            planId,
+            dayNumber,
+            dayExerciseId,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPatch("{planId:guid}/days/{dayNumber:int}/progress")]
     [ProducesResponseType(typeof(PatientTrainingPlanDayProgressResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
