@@ -26,13 +26,20 @@ public class PatientTrainingPlanDayProgressConfiguration : IEntityTypeConfigurat
             .HasColumnName("day_number")
             .IsRequired();
 
-        builder.Property(x => x.StateRating)
-            .HasColumnName("state_rating")
+        builder.Property(x => x.WellBeingRating)
+            .HasColumnName("well_being_rating")
             .IsRequired(false);
 
-        builder.Property(x => x.Notes)
-            .HasColumnName("notes")
-            .HasMaxLength(2000)
+        builder.Property(x => x.WorkoutDifficultyRating)
+            .HasColumnName("workout_difficulty_rating")
+            .IsRequired(false);
+
+        builder.Property(x => x.HadPain)
+            .HasColumnName("had_pain")
+            .IsRequired(false);
+
+        builder.Property(x => x.PainIntensityRating)
+            .HasColumnName("pain_intensity_rating")
             .IsRequired(false);
 
         builder.Property(x => x.CompletedAtUtc)
@@ -45,8 +52,20 @@ public class PatientTrainingPlanDayProgressConfiguration : IEntityTypeConfigurat
         builder.HasIndex(x => x.PatientTrainingPlanId);
 
         builder.ToTable(x => x.HasCheckConstraint(
-            "CK_patient_training_plan_day_progresses_state_rating",
-            "state_rating IS NULL OR (state_rating >= 1 AND state_rating <= 5)"));
+            "CK_ptp_day_progress_well_being_rating",
+            "well_being_rating IS NULL OR (well_being_rating >= 1 AND well_being_rating <= 10)"));
+
+        builder.ToTable(x => x.HasCheckConstraint(
+            "CK_ptp_day_progress_workout_difficulty_rating",
+            "workout_difficulty_rating IS NULL OR (workout_difficulty_rating >= 1 AND workout_difficulty_rating <= 10)"));
+
+        builder.ToTable(x => x.HasCheckConstraint(
+            "CK_ptp_day_progress_pain_intensity_rating",
+            "pain_intensity_rating IS NULL OR (pain_intensity_rating >= 1 AND pain_intensity_rating <= 10)"));
+
+        builder.ToTable(x => x.HasCheckConstraint(
+            "CK_ptp_day_progress_pain_consistency",
+            "(had_pain IS TRUE AND pain_intensity_rating IS NOT NULL) OR (had_pain IS NOT TRUE AND pain_intensity_rating IS NULL)"));
 
         builder.HasOne(x => x.Patient)
             .WithMany()

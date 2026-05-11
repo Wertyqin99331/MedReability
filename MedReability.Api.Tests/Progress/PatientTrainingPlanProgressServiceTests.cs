@@ -73,12 +73,12 @@ public class PatientTrainingPlanProgressServiceTests
                 dayNumber: 1,
                 new UpdatePatientTrainingPlanDayProgressRequestDto
                 {
-                    StateRating = 4
+                    WellBeingRating = 4
                 }));
     }
 
     [Fact]
-    public async Task UpdateDayProgress_UpdatesRatingAndNotes()
+    public async Task UpdateDayProgress_UpdatesWellBeingDifficultyAndPainFields()
     {
         await using var db = CreateDbContext();
         var data = await SeedAsync(db);
@@ -92,12 +92,70 @@ public class PatientTrainingPlanProgressServiceTests
             dayNumber: 1,
             new UpdatePatientTrainingPlanDayProgressRequestDto
             {
-                StateRating = 5,
-                Notes = "Feeling better"
+                WellBeingRating = 8,
+                WorkoutDifficultyRating = 6,
+                HadPain = true,
+                PainIntensityRating = 3
             });
 
-        Assert.Equal(5, updated.StateRating);
-        Assert.Equal("Feeling better", updated.Notes);
+        Assert.Equal(8, updated.WellBeingRating);
+        Assert.Equal(6, updated.WorkoutDifficultyRating);
+        Assert.True(updated.HadPain);
+        Assert.Equal(3, updated.PainIntensityRating);
+    }
+
+    [Fact]
+    public async Task UpdateDayProgress_WithHadPainFalse_ClearsPainIntensity()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        await service.CompleteDayAsync(data.ClinicAId, data.PatientAId, data.PlanId, dayNumber: 1);
+        await service.UpdateDayProgressAsync(
+            data.ClinicAId,
+            data.PatientAId,
+            data.PlanId,
+            dayNumber: 1,
+            new UpdatePatientTrainingPlanDayProgressRequestDto
+            {
+                HadPain = true,
+                PainIntensityRating = 3
+            });
+
+        var updated = await service.UpdateDayProgressAsync(
+            data.ClinicAId,
+            data.PatientAId,
+            data.PlanId,
+            dayNumber: 1,
+            new UpdatePatientTrainingPlanDayProgressRequestDto
+            {
+                HadPain = false
+            });
+
+        Assert.False(updated.HadPain);
+        Assert.Null(updated.PainIntensityRating);
+    }
+
+    [Fact]
+    public async Task UpdateDayProgress_WithHadPainTrueWithoutIntensity_ThrowsInvalidOperation()
+    {
+        await using var db = CreateDbContext();
+        var data = await SeedAsync(db);
+        var service = CreateService(db);
+
+        await service.CompleteDayAsync(data.ClinicAId, data.PatientAId, data.PlanId, dayNumber: 1);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.UpdateDayProgressAsync(
+                data.ClinicAId,
+                data.PatientAId,
+                data.PlanId,
+                dayNumber: 1,
+                new UpdatePatientTrainingPlanDayProgressRequestDto
+                {
+                    HadPain = true
+                }));
     }
 
     private static AppDbContext CreateDbContext()
@@ -219,4 +277,3 @@ public class PatientTrainingPlanProgressServiceTests
         Guid PatientAId,
         Guid PlanId);
 }
-

@@ -21,6 +21,7 @@ public class PatientProgramProgressController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMyOverview(
         [FromQuery] DateOnly? startDate,
+        [FromQuery] DateOnly? workoutDate,
         CancellationToken cancellationToken)
     {
         var clinicId = User.GetClinicId();
@@ -35,6 +36,7 @@ public class PatientProgramProgressController(
             clinicId.Value,
             userId.Value,
             startDate,
+            workoutDate,
             cancellationToken);
 
         return Ok(overview);

@@ -42,6 +42,7 @@ public class DoctorsController(
     public async Task<IActionResult> GetPatientOverview(
         Guid patientId,
         [FromQuery] DateOnly? startDate,
+        [FromQuery] DateOnly? workoutDate,
         CancellationToken cancellationToken)
     {
         var clinicId = User.GetClinicId();
@@ -57,6 +58,7 @@ public class DoctorsController(
             doctorId.Value,
             patientId,
             startDate,
+            workoutDate,
             cancellationToken);
 
         return Ok(overview);

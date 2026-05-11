@@ -100,6 +100,7 @@ public class DoctorPatientAssignmentService(
         Guid doctorId,
         Guid patientId,
         DateOnly? startDate,
+        DateOnly? workoutDate,
         CancellationToken cancellationToken = default)
     {
         var doctor = await dbContext.Users
@@ -135,6 +136,7 @@ public class DoctorPatientAssignmentService(
             clinicId,
             patientId,
             startDate,
+            workoutDate,
             () => new DoctorPatientOverviewResponseDto
             {
                 Patient = MapOverviewPatient(patient)
@@ -146,6 +148,7 @@ public class DoctorPatientAssignmentService(
         Guid clinicId,
         Guid patientId,
         DateOnly? startDate,
+        DateOnly? workoutDate,
         CancellationToken cancellationToken = default)
     {
         await GetPatientInClinicAsync(clinicId, patientId, cancellationToken);
@@ -154,6 +157,7 @@ public class DoctorPatientAssignmentService(
             clinicId,
             patientId,
             startDate,
+            workoutDate,
             () => new PatientPlanOverviewResponseDto(),
             cancellationToken);
     }
@@ -162,11 +166,13 @@ public class DoctorPatientAssignmentService(
         Guid clinicId,
         Guid patientId,
         DateOnly? startDate,
+        DateOnly? workoutDate,
         Func<TResponse> createResponse,
         CancellationToken cancellationToken)
         where TResponse : PatientPlanOverviewResponseDto
     {
         var weekStart = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var selectedWorkoutDate = workoutDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
         var latestPlan = await dbContext.PatientTrainingPlans
             .AsNoTracking()
@@ -183,6 +189,7 @@ public class DoctorPatientAssignmentService(
             response.Progress = null;
             response.Days = [];
             response.TodayWorkout = null;
+            response.SelectedDayProgress = null;
             return response;
         }
 
@@ -216,8 +223,10 @@ public class DoctorPatientAssignmentService(
                     DayType = DoctorPatientOverviewDayType.Empty,
                     HasTraining = false,
                     IsCompleted = false,
-                    StateRating = null,
-                    Notes = null
+                    WellBeingRating = null,
+                    WorkoutDifficultyRating = null,
+                    HadPain = null,
+                    PainIntensityRating = null
                 });
                 continue;
             }
@@ -232,8 +241,10 @@ public class DoctorPatientAssignmentService(
                 DayType = planDay.IsRestDay ? DoctorPatientOverviewDayType.Rest : DoctorPatientOverviewDayType.Training,
                 HasTraining = !planDay.IsRestDay,
                 IsCompleted = isCompleted,
-                StateRating = progress?.StateRating,
-                Notes = progress?.Notes
+                WellBeingRating = progress?.WellBeingRating,
+                WorkoutDifficultyRating = progress?.WorkoutDifficultyRating,
+                HadPain = progress?.HadPain,
+                PainIntensityRating = progress?.PainIntensityRating
             });
         }
 
@@ -244,8 +255,8 @@ public class DoctorPatientAssignmentService(
             : (int)Math.Round((double)completedDaysCount * 100 / plannedTrainingDaysCount, MidpointRounding.AwayFromZero);
 
         DoctorPatientTodayWorkoutDto? todayWorkout = null;
-        var todayDate = DateOnly.FromDateTime(DateTime.UtcNow);
-        var todayDayNumber = GetDayNumberFromPlanStart(plan.StartDate, todayDate);
+        var todayDayNumber = GetDayNumberFromPlanStart(plan.StartDate, selectedWorkoutDate);
+        progressByDayNumber.TryGetValue(todayDayNumber, out var selectedDayProgress);
         if (todayDayNumber > 0 &&
             daysByNumber.TryGetValue(todayDayNumber, out var todayPlanDay) &&
             !todayPlanDay.IsRestDay)
@@ -281,7 +292,7 @@ public class DoctorPatientAssignmentService(
 
             todayWorkout = new DoctorPatientTodayWorkoutDto
             {
-                Date = todayDate,
+                Date = selectedWorkoutDate,
                 DayNumber = todayDayNumber,
                 IsCompletedToday = progressByDayNumber.ContainsKey(todayDayNumber),
                 IsRestDay = false,
@@ -306,6 +317,15 @@ public class DoctorPatientAssignmentService(
         };
         result.Days = days;
         result.TodayWorkout = todayWorkout;
+        result.SelectedDayProgress = selectedDayProgress is null
+            ? null
+            : new PatientSelectedDayProgressDto
+            {
+                WellBeingRating = selectedDayProgress.WellBeingRating,
+                WorkoutDifficultyRating = selectedDayProgress.WorkoutDifficultyRating,
+                HadPain = selectedDayProgress.HadPain,
+                PainIntensityRating = selectedDayProgress.PainIntensityRating
+            };
         return result;
     }
 

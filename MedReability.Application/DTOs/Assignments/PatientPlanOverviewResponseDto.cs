@@ -7,4 +7,5 @@ public class PatientPlanOverviewResponseDto
     public DoctorPatientOverviewProgressDto? Progress { get; set; }
     public List<DoctorPatientOverviewDayDto> Days { get; set; } = [];
     public DoctorPatientTodayWorkoutDto? TodayWorkout { get; set; }
+    public PatientSelectedDayProgressDto? SelectedDayProgress { get; set; }
 }

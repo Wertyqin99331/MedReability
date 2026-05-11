@@ -224,8 +224,10 @@ public class PatientTrainingPlanService(
             PatientId = patientId,
             PatientTrainingPlanId = planId,
             DayNumber = dayNumber,
-            StateRating = null,
-            Notes = null,
+            WellBeingRating = null,
+            WorkoutDifficultyRating = null,
+            HadPain = null,
+            PainIntensityRating = null,
             CompletedAtUtc = DateTime.UtcNow
         };
 
@@ -282,14 +284,28 @@ public class PatientTrainingPlanService(
             throw new InvalidOperationException("DayNumber must be greater than 0.");
         }
 
-        if (request.StateRating.HasValue && (request.StateRating.Value < 1 || request.StateRating.Value > 5))
+        if (request.WellBeingRating.HasValue && !IsRatingFromOneToTen(request.WellBeingRating.Value))
         {
-            throw new InvalidOperationException("StateRating must be between 1 and 5.");
+            throw new InvalidOperationException("WellBeingRating must be between 1 and 10.");
         }
 
-        if (request.StateRating is null && request.Notes is null)
+        if (request.WorkoutDifficultyRating.HasValue && !IsRatingFromOneToTen(request.WorkoutDifficultyRating.Value))
         {
-            throw new InvalidOperationException("At least one field (StateRating or Notes) must be provided.");
+            throw new InvalidOperationException("WorkoutDifficultyRating must be between 1 and 10.");
+        }
+
+        if (request.PainIntensityRating.HasValue && !IsRatingFromOneToTen(request.PainIntensityRating.Value))
+        {
+            throw new InvalidOperationException("PainIntensityRating must be between 1 and 10.");
+        }
+
+        if (request.WellBeingRating is null &&
+            request.WorkoutDifficultyRating is null &&
+            request.HadPain is null &&
+            request.PainIntensityRating is null)
+        {
+            throw new InvalidOperationException(
+                "At least one field (WellBeingRating, WorkoutDifficultyRating, HadPain or PainIntensityRating) must be provided.");
         }
 
         await EnsurePatientPlanDayExistsAsync(clinicId, patientId, planId, dayNumber, cancellationToken);
@@ -304,14 +320,39 @@ public class PatientTrainingPlanService(
             throw new InvalidOperationException("Day completion was not marked yet.");
         }
 
-        if (request.StateRating.HasValue)
+        if (request.WellBeingRating.HasValue)
         {
-            progress.StateRating = request.StateRating.Value;
+            progress.WellBeingRating = request.WellBeingRating.Value;
         }
 
-        if (request.Notes is not null)
+        if (request.WorkoutDifficultyRating.HasValue)
         {
-            progress.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+            progress.WorkoutDifficultyRating = request.WorkoutDifficultyRating.Value;
+        }
+
+        if (request.HadPain.HasValue)
+        {
+            progress.HadPain = request.HadPain.Value;
+
+            if (!request.HadPain.Value)
+            {
+                progress.PainIntensityRating = null;
+            }
+        }
+
+        if (request.PainIntensityRating.HasValue)
+        {
+            progress.PainIntensityRating = request.PainIntensityRating.Value;
+        }
+
+        if (progress.HadPain == true && progress.PainIntensityRating is null)
+        {
+            throw new InvalidOperationException("PainIntensityRating is required when HadPain is true.");
+        }
+
+        if (progress.HadPain != true && progress.PainIntensityRating is not null)
+        {
+            throw new InvalidOperationException("PainIntensityRating can be set only when HadPain is true.");
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -643,9 +684,16 @@ public class PatientTrainingPlanService(
             PatientId = progress.PatientId,
             PatientTrainingPlanId = progress.PatientTrainingPlanId,
             DayNumber = progress.DayNumber,
-            StateRating = progress.StateRating,
-            Notes = progress.Notes,
+            WellBeingRating = progress.WellBeingRating,
+            WorkoutDifficultyRating = progress.WorkoutDifficultyRating,
+            HadPain = progress.HadPain,
+            PainIntensityRating = progress.PainIntensityRating,
             CompletedAtUtc = progress.CompletedAtUtc
         };
+    }
+
+    private static bool IsRatingFromOneToTen(int value)
+    {
+        return value is >= 1 and <= 10;
     }
 }
