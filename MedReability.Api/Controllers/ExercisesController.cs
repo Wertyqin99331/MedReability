@@ -75,6 +75,8 @@ public class ExercisesController(IExerciseService exerciseService) : ControllerB
 
     [HttpPost]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(200 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 200 * 1024 * 1024)]
     [ProducesResponseType(typeof(ExerciseResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -113,6 +115,8 @@ public class ExercisesController(IExerciseService exerciseService) : ControllerB
 
     [HttpPut("{id:guid}")]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(200 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 200 * 1024 * 1024)]
     [ProducesResponseType(typeof(ExerciseResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
